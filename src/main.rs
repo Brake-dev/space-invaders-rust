@@ -56,7 +56,7 @@ fn main() -> Result<(), String> {
 
         thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
 
-        for row in game.get_all_rows() {
+        for row in game.get_all_textures() {
             for object in row {
                 canvas.copy(
                     match textures.get(&object.texture_name) {

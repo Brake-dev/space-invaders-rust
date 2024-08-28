@@ -9,6 +9,9 @@ const ROW_VERTICAL_GAP: u32 = 16 * PIXEL_SIZE;
 const ROW1_CENTERING_BUFFER: u32 = 16;
 const ROW2_3_CENTERING_BUFFER: u32 = PIXEL_SIZE;
 
+const BARRIER_EDGE_BUFFER: u32 = 14 * PIXEL_SIZE;
+const BARRIER_GAP: u32 = 88 * PIXEL_SIZE;
+
 const SCREEN_EDGE_BUFFER: u32 = 2 * PIXEL_SIZE;
 
 #[derive(Clone, Debug)]
@@ -50,6 +53,9 @@ pub struct Game {
     pub invader_row3: Vec<GameObject>,
     pub invader_row4: Vec<GameObject>,
     pub invader_row5: Vec<GameObject>,
+
+    pub barrier_row: Vec<GameObject>,
+    pub player: Vec<GameObject>,
 }
 
 impl Game {
@@ -59,6 +65,8 @@ impl Game {
         let mut invader_row3 = vec![];
         let mut invader_row4 = vec![];
         let mut invader_row5 = vec![];
+
+        let mut barrier_row = vec![];
 
         let mut cur_x = SCREEN_EDGE_BUFFER + ROW1_CENTERING_BUFFER;
         let mut cur_y = CANVAS_HEIGHT / 6;
@@ -135,22 +143,48 @@ impl Game {
             cur_x += (12 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP;
         }
 
+        let mut barrier_x = SCREEN_EDGE_BUFFER + BARRIER_EDGE_BUFFER;
+
+        for _i in 0..4 {
+            barrier_row.push(GameObject::new(
+                barrier_x,
+                CANVAS_HEIGHT - 44 * PIXEL_SIZE,
+                24,
+                18,
+                String::from("barrier_texture"),
+            ));
+
+            barrier_x += BARRIER_GAP;
+        }
+
+        let player = vec![GameObject::new(
+            CANVAS_WIDTH / 2,
+            CANVAS_HEIGHT - 10 * PIXEL_SIZE,
+            15,
+            8,
+            String::from("player_texture"),
+        )];
+
         Game {
             invader_row1,
             invader_row2,
             invader_row3,
             invader_row4,
             invader_row5,
+            barrier_row,
+            player,
         }
     }
 
-    pub fn get_all_rows(&self) -> [&Vec<GameObject>; 5] {
+    pub fn get_all_textures(&self) -> [&Vec<GameObject>; 7] {
         [
             &self.invader_row1,
             &self.invader_row2,
             &self.invader_row3,
             &self.invader_row4,
             &self.invader_row5,
+            &self.barrier_row,
+            &self.player,
         ]
     }
 
