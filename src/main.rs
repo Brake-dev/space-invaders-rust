@@ -5,12 +5,14 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
+use std::thread;
+use std::time::Duration;
 
 mod game;
 mod texture_templates;
 mod textures;
 
-use crate::game::{Game, GameObject, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::game::{Game, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::textures::textures;
 
 fn main() -> Result<(), String> {
@@ -30,11 +32,10 @@ fn main() -> Result<(), String> {
     canvas.clear();
     canvas.present();
 
-    let game_object = GameObject::new(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
-    let mut game = Game::new(vec![game_object]);
+    let mut game = Game::new();
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
-    let (square_texture1, square_texture2) = textures(&mut canvas, &texture_creator)?;
+    let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -53,12 +54,24 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
-        for object in &mut game.game_objects {
-            canvas.copy(
-                &square_texture1,
-                None,
-                Rect::new(object.x as i32, object.y as i32, PIXEL_SIZE, PIXEL_SIZE),
-            )?;
+        thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
+
+        for row in game.get_all_rows() {
+            for object in row {
+                canvas.copy(
+                    match textures.get(&object.texture_name) {
+                        Some(tex) => tex,
+                        None => &missing_texture,
+                    },
+                    None,
+                    Rect::new(
+                        object.x as i32,
+                        object.y as i32,
+                        PIXEL_SIZE * object.width,
+                        PIXEL_SIZE * object.height,
+                    ),
+                )?;
+            }
         }
 
         canvas.present();

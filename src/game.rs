@@ -1,16 +1,34 @@
-pub const PIXEL_SIZE: u32 = 9;
+pub const PIXEL_SIZE: u32 = 6;
 pub const CANVAS_WIDTH: u32 = 1920;
 pub const CANVAS_HEIGHT: u32 = 1080;
 
-#[derive(Clone, Copy, Debug)]
+const ROW_SIZE: u32 = 11;
+const ROW_HORIZONTAL_GAP: u32 = 4 * PIXEL_SIZE;
+const ROW_VERTICAL_GAP: u32 = 16 * PIXEL_SIZE;
+
+const ROW1_CENTERING_BUFFER: u32 = 16;
+const ROW2_3_CENTERING_BUFFER: u32 = PIXEL_SIZE;
+
+const SCREEN_EDGE_BUFFER: u32 = 2 * PIXEL_SIZE;
+
+#[derive(Clone, Debug)]
 pub struct GameObject {
     pub x: u32,
     pub y: u32,
+    pub width: u32,
+    pub height: u32,
+    pub texture_name: String,
 }
 
 impl GameObject {
-    pub fn new(x: u32, y: u32) -> Self {
-        GameObject { x, y }
+    pub fn new(x: u32, y: u32, width: u32, height: u32, texture_name: String) -> Self {
+        GameObject {
+            x,
+            y,
+            width,
+            height,
+            texture_name,
+        }
     }
 
     fn move_x_right(&mut self) {
@@ -27,21 +45,146 @@ impl GameObject {
 }
 
 pub struct Game {
-    pub game_objects: Vec<GameObject>,
+    pub invader_row1: Vec<GameObject>,
+    pub invader_row2: Vec<GameObject>,
+    pub invader_row3: Vec<GameObject>,
+    pub invader_row4: Vec<GameObject>,
+    pub invader_row5: Vec<GameObject>,
 }
 
 impl Game {
-    pub fn new(game_objects: Vec<GameObject>) -> Self {
-        Game { game_objects }
+    pub fn new() -> Self {
+        let mut invader_row1 = vec![];
+        let mut invader_row2 = vec![];
+        let mut invader_row3 = vec![];
+        let mut invader_row4 = vec![];
+        let mut invader_row5 = vec![];
+
+        let mut cur_x = SCREEN_EDGE_BUFFER + ROW1_CENTERING_BUFFER;
+        let mut cur_y = CANVAS_HEIGHT / 6;
+
+        for _i in 0..ROW_SIZE {
+            invader_row1.push(GameObject::new(
+                cur_x,
+                cur_y,
+                8,
+                8,
+                String::from("invader_texture1"),
+            ));
+
+            cur_x += (8 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP * 2;
+        }
+
+        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
+        cur_y += ROW_VERTICAL_GAP;
+
+        for _i in 0..ROW_SIZE {
+            invader_row2.push(GameObject::new(
+                cur_x,
+                cur_y,
+                11,
+                8,
+                String::from("invader_texture2"),
+            ));
+
+            cur_x += (11 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP + ROW2_3_CENTERING_BUFFER;
+        }
+
+        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
+        cur_y += ROW_VERTICAL_GAP;
+
+        for _i in 0..ROW_SIZE {
+            invader_row3.push(GameObject::new(
+                cur_x,
+                cur_y,
+                11,
+                8,
+                String::from("invader_texture2"),
+            ));
+
+            cur_x += (11 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP + ROW2_3_CENTERING_BUFFER;
+        }
+
+        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
+        cur_y += ROW_VERTICAL_GAP;
+
+        for _i in 0..ROW_SIZE {
+            invader_row4.push(GameObject::new(
+                cur_x,
+                cur_y,
+                12,
+                8,
+                String::from("invader_texture3"),
+            ));
+
+            cur_x += (12 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP;
+        }
+
+        cur_x = SCREEN_EDGE_BUFFER;
+        cur_y += ROW_VERTICAL_GAP;
+
+        for _i in 0..ROW_SIZE {
+            invader_row5.push(GameObject::new(
+                cur_x,
+                cur_y,
+                12,
+                8,
+                String::from("invader_texture3"),
+            ));
+
+            cur_x += (12 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP;
+        }
+
+        Game {
+            invader_row1,
+            invader_row2,
+            invader_row3,
+            invader_row4,
+            invader_row5,
+        }
+    }
+
+    pub fn get_all_rows(&self) -> [&Vec<GameObject>; 5] {
+        [
+            &self.invader_row1,
+            &self.invader_row2,
+            &self.invader_row3,
+            &self.invader_row4,
+            &self.invader_row5,
+        ]
     }
 
     pub fn update(&mut self) {
-        let mut next_objects = self.game_objects.clone();
+        let mut invader_row1_next = self.invader_row1.clone();
+        let mut invader_row2_next = self.invader_row2.clone();
+        let mut invader_row3_next = self.invader_row3.clone();
+        let mut invader_row4_next = self.invader_row4.clone();
+        let mut invader_row5_next = self.invader_row5.clone();
 
-        for object in &mut next_objects {
+        for object in &mut invader_row1_next {
             object.move_x_right();
         }
 
-        self.game_objects = next_objects;
+        for object in &mut invader_row2_next {
+            object.move_x_right();
+        }
+
+        for object in &mut invader_row3_next {
+            object.move_x_right();
+        }
+
+        for object in &mut invader_row4_next {
+            object.move_x_right();
+        }
+
+        for object in &mut invader_row5_next {
+            object.move_x_right();
+        }
+
+        self.invader_row1 = invader_row1_next;
+        self.invader_row2 = invader_row2_next;
+        self.invader_row3 = invader_row3_next;
+        self.invader_row4 = invader_row4_next;
+        self.invader_row5 = invader_row5_next;
     }
 }
