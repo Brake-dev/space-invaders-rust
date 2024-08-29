@@ -47,6 +47,52 @@ impl GameObject {
     }
 }
 
+pub struct Player {
+    pub game_object: GameObject,
+    moving_left: bool,
+    moving_right: bool,
+}
+
+impl Player {
+    pub fn new() -> Self {
+        Player {
+            game_object: GameObject::new(
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT - HEIGHT_DIV_18,
+                15,
+                8,
+                String::from("player_texture"),
+            ),
+            moving_left: false,
+            moving_right: false,
+        }
+    }
+
+    pub fn set_moving_left(&mut self, moving: bool) {
+        self.moving_left = moving;
+        if moving {
+            self.moving_right = false;
+        }
+    }
+
+    pub fn set_moving_right(&mut self, moving: bool) {
+        self.moving_right = moving;
+        if moving {
+            self.moving_left = false;
+        }
+    }
+
+    pub fn update(&mut self) {
+        if self.moving_left {
+            self.game_object.x -= 10;
+        }
+
+        if self.moving_right {
+            self.game_object.x += 10;
+        }
+    }
+}
+
 pub struct Game {
     pub invader_row1: Vec<GameObject>,
     pub invader_row2: Vec<GameObject>,
@@ -55,7 +101,6 @@ pub struct Game {
     pub invader_row5: Vec<GameObject>,
 
     pub barrier_row: Vec<GameObject>,
-    pub player: Vec<GameObject>,
 }
 
 impl Game {
@@ -157,14 +202,6 @@ impl Game {
             barrier_x += WIDTH_DIV_4;
         }
 
-        let player = vec![GameObject::new(
-            CANVAS_WIDTH / 2,
-            CANVAS_HEIGHT - HEIGHT_DIV_18,
-            15,
-            8,
-            String::from("player_texture"),
-        )];
-
         Game {
             invader_row1,
             invader_row2,
@@ -172,11 +209,10 @@ impl Game {
             invader_row4,
             invader_row5,
             barrier_row,
-            player,
         }
     }
 
-    pub fn get_all_textures(&self) -> [&Vec<GameObject>; 7] {
+    pub fn get_all_textures(&self) -> [&Vec<GameObject>; 6] {
         [
             &self.invader_row1,
             &self.invader_row2,
@@ -184,7 +220,6 @@ impl Game {
             &self.invader_row4,
             &self.invader_row5,
             &self.barrier_row,
-            &self.player,
         ]
     }
 

@@ -5,6 +5,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
+use std::collections::HashSet;
 use std::thread;
 use std::time::Duration;
 
@@ -12,7 +13,7 @@ mod game;
 mod texture_templates;
 mod textures;
 
-use crate::game::{Game, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::game::{Game, Player, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::textures::textures;
 
 fn main() -> Result<(), String> {
@@ -33,11 +34,14 @@ fn main() -> Result<(), String> {
     canvas.present();
 
     let mut game = Game::new();
+    let mut player = Player::new();
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
     let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
 
     let mut event_pump = sdl_context.event_pump()?;
+
+    let mut prev_keys = HashSet::new();
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -50,6 +54,35 @@ fn main() -> Result<(), String> {
                 _ => {}
             }
         }
+
+        let keys = event_pump
+            .keyboard_state()
+            .pressed_scancodes()
+            .filter_map(Keycode::from_scancode)
+            .collect();
+
+        let new_keys = &keys - &prev_keys;
+        let old_keys = &prev_keys - &keys;
+
+        if !new_keys.is_empty() || !old_keys.is_empty() {
+            if new_keys.contains(&Keycode::Left) {
+                player.set_moving_left(true);
+            } else if old_keys.contains(&Keycode::Left) {
+                player.set_moving_left(false);
+            }
+
+            if new_keys.contains(&Keycode::Right) {
+                player.set_moving_right(true);
+            } else if old_keys.contains(&Keycode::Right) {
+                player.set_moving_right(false);
+            }
+
+            if new_keys.contains(&Keycode::Space) {
+                println!("Space!");
+            }
+        }
+
+        prev_keys = keys;
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
@@ -74,9 +107,24 @@ fn main() -> Result<(), String> {
             }
         }
 
+        canvas.copy(
+            match textures.get(&player.game_object.texture_name) {
+                Some(tex) => tex,
+                None => &missing_texture,
+            },
+            None,
+            Rect::new(
+                player.game_object.x as i32,
+                player.game_object.y as i32,
+                PIXEL_SIZE * player.game_object.width,
+                PIXEL_SIZE * player.game_object.height,
+            ),
+        )?;
+
         canvas.present();
 
         game.update();
+        player.update();
     }
 
     Ok(())

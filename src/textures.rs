@@ -48,7 +48,7 @@ pub fn textures<'a>(
             for (i, _) in INVADER_1.iter().enumerate() {
                 for (j, val) in INVADER_1[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
                     }
@@ -69,7 +69,7 @@ pub fn textures<'a>(
             for (i, _) in INVADER_2.iter().enumerate() {
                 for (j, val) in INVADER_2[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
                     }
@@ -90,7 +90,7 @@ pub fn textures<'a>(
             for (i, _) in INVADER_3.iter().enumerate() {
                 for (j, val) in INVADER_3[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
                     }
@@ -111,7 +111,7 @@ pub fn textures<'a>(
             for (i, _) in PLAYER.iter().enumerate() {
                 for (j, val) in PLAYER[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(50, 255, 0));
                     }
@@ -132,7 +132,7 @@ pub fn textures<'a>(
             for (i, _) in BARRIER.iter().enumerate() {
                 for (j, val) in BARRIER[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(50, 255, 0));
                     }
@@ -153,7 +153,7 @@ pub fn textures<'a>(
             for (i, _) in MISSING_TEXTURE.iter().enumerate() {
                 for (j, val) in MISSING_TEXTURE[i].iter().enumerate() {
                     if *val == 0 {
-                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
                     } else {
                         texture_canvas.set_draw_color(Color::RGB(255, 0, 0));
                     }
