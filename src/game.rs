@@ -3,16 +3,16 @@ pub const CANVAS_WIDTH: u32 = 1920;
 pub const CANVAS_HEIGHT: u32 = 1080;
 
 const ROW_SIZE: u32 = 11;
-const ROW_HORIZONTAL_GAP: u32 = 4 * PIXEL_SIZE;
-const ROW_VERTICAL_GAP: u32 = 16 * PIXEL_SIZE;
 
-const ROW1_CENTERING_BUFFER: u32 = 16;
-const ROW2_3_CENTERING_BUFFER: u32 = PIXEL_SIZE;
+const WIDTH_DIV_4: u32 = CANVAS_WIDTH / 4;
+const WIDTH_DIV_20: u32 = CANVAS_WIDTH / 20;
+const WIDTH_DIV_24: u32 = CANVAS_WIDTH / 24;
+const WIDTH_DIV_80: u32 = CANVAS_WIDTH / 80;
+const WIDTH_DIV_160: u32 = CANVAS_WIDTH / 160;
+const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
 
-const BARRIER_EDGE_BUFFER: u32 = 14 * PIXEL_SIZE;
-const BARRIER_GAP: u32 = 88 * PIXEL_SIZE;
-
-const SCREEN_EDGE_BUFFER: u32 = 2 * PIXEL_SIZE;
+const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
+const HEIGHT_DIV_18: u32 = CANVAS_HEIGHT / 18;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
@@ -68,7 +68,7 @@ impl Game {
 
         let mut barrier_row = vec![];
 
-        let mut cur_x = SCREEN_EDGE_BUFFER + ROW1_CENTERING_BUFFER;
+        let mut cur_x = WIDTH_DIV_80;
         let mut cur_y = CANVAS_HEIGHT / 6;
 
         for _i in 0..ROW_SIZE {
@@ -80,11 +80,11 @@ impl Game {
                 String::from("invader_texture1"),
             ));
 
-            cur_x += (8 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP * 2;
+            cur_x += (8 * PIXEL_SIZE) + WIDTH_DIV_80 * 2;
         }
 
-        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
-        cur_y += ROW_VERTICAL_GAP;
+        cur_x = WIDTH_DIV_160 + WIDTH_DIV_320;
+        cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
             invader_row2.push(GameObject::new(
@@ -95,11 +95,11 @@ impl Game {
                 String::from("invader_texture2"),
             ));
 
-            cur_x += (11 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP + ROW2_3_CENTERING_BUFFER;
+            cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
         }
 
-        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
-        cur_y += ROW_VERTICAL_GAP;
+        cur_x = WIDTH_DIV_160 + WIDTH_DIV_320;
+        cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
             invader_row3.push(GameObject::new(
@@ -110,11 +110,11 @@ impl Game {
                 String::from("invader_texture2"),
             ));
 
-            cur_x += (11 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP + ROW2_3_CENTERING_BUFFER;
+            cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
         }
 
-        cur_x = SCREEN_EDGE_BUFFER + ROW2_3_CENTERING_BUFFER;
-        cur_y += ROW_VERTICAL_GAP;
+        cur_x = WIDTH_DIV_160 + WIDTH_DIV_320;
+        cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
             invader_row4.push(GameObject::new(
@@ -125,11 +125,11 @@ impl Game {
                 String::from("invader_texture3"),
             ));
 
-            cur_x += (12 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP;
+            cur_x += (12 * PIXEL_SIZE) + WIDTH_DIV_80;
         }
 
-        cur_x = SCREEN_EDGE_BUFFER;
-        cur_y += ROW_VERTICAL_GAP;
+        cur_x = WIDTH_DIV_160;
+        cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
             invader_row5.push(GameObject::new(
@@ -140,26 +140,26 @@ impl Game {
                 String::from("invader_texture3"),
             ));
 
-            cur_x += (12 * PIXEL_SIZE) + ROW_HORIZONTAL_GAP;
+            cur_x += (12 * PIXEL_SIZE) + WIDTH_DIV_80;
         }
 
-        let mut barrier_x = SCREEN_EDGE_BUFFER + BARRIER_EDGE_BUFFER;
+        let mut barrier_x = WIDTH_DIV_24 * 2;
 
         for _i in 0..4 {
             barrier_row.push(GameObject::new(
                 barrier_x,
-                CANVAS_HEIGHT - 44 * PIXEL_SIZE,
+                CANVAS_HEIGHT - HEIGHT_DIV_4,
                 24,
                 18,
                 String::from("barrier_texture"),
             ));
 
-            barrier_x += BARRIER_GAP;
+            barrier_x += WIDTH_DIV_4;
         }
 
         let player = vec![GameObject::new(
             CANVAS_WIDTH / 2,
-            CANVAS_HEIGHT - 10 * PIXEL_SIZE,
+            CANVAS_HEIGHT - HEIGHT_DIV_18,
             15,
             8,
             String::from("player_texture"),
