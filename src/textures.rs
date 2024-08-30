@@ -6,7 +6,9 @@ use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 
 use crate::game::PIXEL_SIZE;
-use crate::texture_templates::{BARRIER, INVADER_1, INVADER_2, INVADER_3, MISSING_TEXTURE, PLAYER};
+use crate::texture_templates::{
+    BARRIER, INVADER_1, INVADER_2, INVADER_3, MISSING_TEXTURE, PLAYER, SHOT,
+};
 
 pub fn textures<'a>(
     canvas: &mut Canvas<Window>,
@@ -26,6 +28,10 @@ pub fn textures<'a>(
 
     let mut player_texture = texture_creator
         .create_texture_target(None, PLAYER[0].len() as u32, PLAYER.len() as u32)
+        .map_err(|e| e.to_string())?;
+
+    let mut shot_texture = texture_creator
+        .create_texture_target(None, 1, SHOT.len() as u32)
         .map_err(|e| e.to_string())?;
 
     let mut barrier_texture = texture_creator
@@ -125,6 +131,21 @@ pub fn textures<'a>(
         .map_err(|e| e.to_string())?;
 
     canvas
+        .with_texture_canvas(&mut shot_texture, |texture_canvas| {
+            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.clear();
+
+            for (i, _) in SHOT.iter().enumerate() {
+                texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
+
+                texture_canvas
+                    .fill_rect(Rect::new(0, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                    .expect("could not draw rect");
+            }
+        })
+        .map_err(|e| e.to_string())?;
+
+    canvas
         .with_texture_canvas(&mut barrier_texture, |texture_canvas| {
             texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
             texture_canvas.clear();
@@ -171,6 +192,7 @@ pub fn textures<'a>(
     hash.insert(String::from("invader_texture2"), invader_texture2);
     hash.insert(String::from("invader_texture3"), invader_texture3);
     hash.insert(String::from("player_texture"), player_texture);
+    hash.insert(String::from("shot_texture"), shot_texture);
     hash.insert(String::from("barrier_texture"), barrier_texture);
 
     Ok((hash, missing_texture))

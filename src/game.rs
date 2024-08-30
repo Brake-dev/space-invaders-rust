@@ -49,6 +49,7 @@ impl GameObject {
 
 pub struct Player {
     pub game_object: GameObject,
+    pub bullets: Vec<GameObject>,
     moving_left: bool,
     moving_right: bool,
 }
@@ -65,6 +66,7 @@ impl Player {
             ),
             moving_left: false,
             moving_right: false,
+            bullets: vec![],
         }
     }
 
@@ -82,6 +84,16 @@ impl Player {
         }
     }
 
+    pub fn shoot(&mut self) {
+        self.bullets.push(GameObject::new(
+            self.game_object.x + ((self.game_object.width * PIXEL_SIZE) / 2) - 3,
+            self.game_object.y - (self.game_object.height * PIXEL_SIZE) / 2,
+            1,
+            4,
+            String::from("shot_texture"),
+        ));
+    }
+
     pub fn update(&mut self) {
         if self.moving_left {
             self.game_object.x -= 10;
@@ -89,6 +101,18 @@ impl Player {
 
         if self.moving_right {
             self.game_object.x += 10;
+        }
+
+        if !self.bullets.is_empty() {
+            let mut next_bullets = self.bullets.clone();
+
+            next_bullets.retain(|b| b.y - 10 > 10);
+
+            for bullet in &mut next_bullets {
+                bullet.y -= 10;
+            }
+
+            self.bullets = next_bullets;
         }
     }
 }
@@ -99,7 +123,6 @@ pub struct Game {
     pub invader_row3: Vec<GameObject>,
     pub invader_row4: Vec<GameObject>,
     pub invader_row5: Vec<GameObject>,
-
     pub barrier_row: Vec<GameObject>,
 }
 

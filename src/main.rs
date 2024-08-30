@@ -78,7 +78,7 @@ fn main() -> Result<(), String> {
             }
 
             if new_keys.contains(&Keycode::Space) {
-                println!("Space!");
+                player.shoot();
             }
         }
 
@@ -120,6 +120,22 @@ fn main() -> Result<(), String> {
                 PIXEL_SIZE * player.game_object.height,
             ),
         )?;
+
+        for bullet in &player.bullets {
+            canvas.copy(
+                match textures.get(&String::from("shot_texture")) {
+                    Some(tex) => tex,
+                    None => &missing_texture,
+                },
+                None,
+                Rect::new(
+                    bullet.x as i32,
+                    bullet.y as i32,
+                    PIXEL_SIZE * bullet.width,
+                    PIXEL_SIZE * bullet.height,
+                ),
+            )?;
+        }
 
         canvas.present();
 
