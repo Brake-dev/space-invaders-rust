@@ -33,18 +33,6 @@ impl GameObject {
             texture_name,
         }
     }
-
-    fn move_x_right(&mut self) {
-        self.x += 1;
-    }
-
-    fn move_x_left(&mut self) {
-        self.x -= 1;
-    }
-
-    fn move_y(&mut self) {
-        self.y -= 1;
-    }
 }
 
 pub struct Player {
@@ -116,13 +104,37 @@ impl Player {
         }
     }
 }
+#[derive(Clone)]
+pub struct Invader {
+    pub game_object: GameObject,
+}
+
+impl Invader {
+    pub fn new(x: u32, y: u32, width: u32, height: u32, texture_name: String) -> Self {
+        Invader {
+            game_object: GameObject::new(x, y, width, height, texture_name),
+        }
+    }
+
+    fn move_x_right(&mut self) {
+        self.game_object.x += 1;
+    }
+
+    fn move_x_left(&mut self) {
+        self.game_object.x -= 1;
+    }
+
+    fn move_y(&mut self) {
+        self.game_object.y -= 1;
+    }
+}
 
 pub struct Game {
-    pub invader_row1: Vec<GameObject>,
-    pub invader_row2: Vec<GameObject>,
-    pub invader_row3: Vec<GameObject>,
-    pub invader_row4: Vec<GameObject>,
-    pub invader_row5: Vec<GameObject>,
+    pub invader_row1: Vec<Invader>,
+    pub invader_row2: Vec<Invader>,
+    pub invader_row3: Vec<Invader>,
+    pub invader_row4: Vec<Invader>,
+    pub invader_row5: Vec<Invader>,
     pub barrier_row: Vec<GameObject>,
 }
 
@@ -140,7 +152,7 @@ impl Game {
         let mut cur_y = CANVAS_HEIGHT / 6;
 
         for _i in 0..ROW_SIZE {
-            invader_row1.push(GameObject::new(
+            invader_row1.push(Invader::new(
                 cur_x,
                 cur_y,
                 8,
@@ -155,7 +167,7 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row2.push(GameObject::new(
+            invader_row2.push(Invader::new(
                 cur_x,
                 cur_y,
                 11,
@@ -170,7 +182,7 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row3.push(GameObject::new(
+            invader_row3.push(Invader::new(
                 cur_x,
                 cur_y,
                 11,
@@ -185,7 +197,7 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row4.push(GameObject::new(
+            invader_row4.push(Invader::new(
                 cur_x,
                 cur_y,
                 12,
@@ -200,7 +212,7 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row5.push(GameObject::new(
+            invader_row5.push(Invader::new(
                 cur_x,
                 cur_y,
                 12,
@@ -235,14 +247,46 @@ impl Game {
         }
     }
 
-    pub fn get_all_textures(&self) -> [&Vec<GameObject>; 6] {
+    pub fn get_invader_barrier_textures(&self) -> [Vec<GameObject>; 6] {
+        let invader_row1_game_object: Vec<GameObject> = self
+            .invader_row1
+            .iter()
+            .map(|i| i.game_object.clone())
+            .collect();
+
+        let invader_row2_game_object: Vec<GameObject> = self
+            .invader_row2
+            .iter()
+            .map(|i| i.game_object.clone())
+            .collect();
+
+        let invader_row3_game_object: Vec<GameObject> = self
+            .invader_row3
+            .iter()
+            .map(|i| i.game_object.clone())
+            .collect();
+
+        let invader_row4_game_object: Vec<GameObject> = self
+            .invader_row4
+            .iter()
+            .map(|i| i.game_object.clone())
+            .collect();
+
+        let invader_row5_game_object: Vec<GameObject> = self
+            .invader_row5
+            .iter()
+            .map(|i| i.game_object.clone())
+            .collect();
+
+        let barrier_game_object = self.barrier_row.clone();
+
         [
-            &self.invader_row1,
-            &self.invader_row2,
-            &self.invader_row3,
-            &self.invader_row4,
-            &self.invader_row5,
-            &self.barrier_row,
+            invader_row1_game_object,
+            invader_row2_game_object,
+            invader_row3_game_object,
+            invader_row4_game_object,
+            invader_row5_game_object,
+            barrier_game_object,
         ]
     }
 
