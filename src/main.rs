@@ -3,7 +3,6 @@ extern crate sdl2;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
 use std::collections::HashSet;
 use std::thread;
@@ -12,9 +11,11 @@ use std::time::Duration;
 mod game;
 mod texture_templates;
 mod textures;
+mod util;
 
-use crate::game::{Game, Player, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::game::{Game, Player, CANVAS_HEIGHT, CANVAS_WIDTH};
 use crate::textures::textures;
+use crate::util::{draw_texture, overlaps};
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -42,6 +43,8 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut prev_keys = HashSet::new();
+
+    let mut shot_timer = 0;
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -77,67 +80,49 @@ fn main() -> Result<(), String> {
                 player.set_moving_right(false);
             }
 
-            if new_keys.contains(&Keycode::Space) {
+            if new_keys.contains(&Keycode::Space) && shot_timer == 0 {
                 player.shoot();
+                shot_timer = 20;
             }
         }
 
         prev_keys = keys;
+
+        if shot_timer > 0 {
+            shot_timer -= 1;
+        }
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
 
         thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
 
-        for row in game.get_invader_barrier_textures() {
-            for object in row {
-                canvas.copy(
-                    match textures.get(&object.texture_name) {
-                        Some(tex) => tex,
-                        None => &missing_texture,
-                    },
-                    None,
-                    Rect::new(
-                        object.x as i32,
-                        object.y as i32,
-                        PIXEL_SIZE * object.width,
-                        PIXEL_SIZE * object.height,
-                    ),
-                )?;
-            }
+        for invader in game.get_all_invaders() {
+            draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
         }
 
-        canvas.copy(
-            match textures.get(&player.game_object.texture_name) {
-                Some(tex) => tex,
-                None => &missing_texture,
-            },
-            None,
-            Rect::new(
-                player.game_object.x as i32,
-                player.game_object.y as i32,
-                PIXEL_SIZE * player.game_object.width,
-                PIXEL_SIZE * player.game_object.height,
-            ),
+        for object in &game.barrier_row {
+            draw_texture(&mut canvas, &textures, &missing_texture, &object)?;
+        }
+
+        draw_texture(
+            &mut canvas,
+            &textures,
+            &missing_texture,
+            &player.game_object,
         )?;
 
         for bullet in &player.bullets {
-            canvas.copy(
-                match textures.get(&String::from("shot_texture")) {
-                    Some(tex) => tex,
-                    None => &missing_texture,
-                },
-                None,
-                Rect::new(
-                    bullet.x as i32,
-                    bullet.y as i32,
-                    PIXEL_SIZE * bullet.width,
-                    PIXEL_SIZE * bullet.height,
-                ),
-            )?;
+            draw_texture(&mut canvas, &textures, &missing_texture, &bullet)?;
         }
 
         canvas.present();
+
+        for bullet in &player.bullets {
+            for invader in &game.get_all_invaders() {
+                overlaps(invader, bullet);
+            }
+        }
 
         game.update();
         player.update();

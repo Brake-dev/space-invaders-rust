@@ -48,8 +48,8 @@ impl Player {
             game_object: GameObject::new(
                 CANVAS_WIDTH / 2,
                 CANVAS_HEIGHT - HEIGHT_DIV_18,
-                15,
-                8,
+                15 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("player_texture"),
             ),
             moving_left: false,
@@ -74,10 +74,10 @@ impl Player {
 
     pub fn shoot(&mut self) {
         self.bullets.push(GameObject::new(
-            self.game_object.x + ((self.game_object.width * PIXEL_SIZE) / 2) - 3,
-            self.game_object.y - (self.game_object.height * PIXEL_SIZE) / 2,
-            1,
-            4,
+            self.game_object.x + (self.game_object.width / 2) - 3,
+            self.game_object.y - self.game_object.height / 2,
+            1 * PIXEL_SIZE,
+            4 * PIXEL_SIZE,
             String::from("shot_texture"),
         ));
     }
@@ -155,8 +155,8 @@ impl Game {
             invader_row1.push(Invader::new(
                 cur_x,
                 cur_y,
-                8,
-                8,
+                8 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("invader_texture1"),
             ));
 
@@ -170,8 +170,8 @@ impl Game {
             invader_row2.push(Invader::new(
                 cur_x,
                 cur_y,
-                11,
-                8,
+                11 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
             ));
 
@@ -185,8 +185,8 @@ impl Game {
             invader_row3.push(Invader::new(
                 cur_x,
                 cur_y,
-                11,
-                8,
+                11 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
             ));
 
@@ -200,8 +200,8 @@ impl Game {
             invader_row4.push(Invader::new(
                 cur_x,
                 cur_y,
-                12,
-                8,
+                12 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
             ));
 
@@ -215,8 +215,8 @@ impl Game {
             invader_row5.push(Invader::new(
                 cur_x,
                 cur_y,
-                12,
-                8,
+                12 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
             ));
 
@@ -229,8 +229,8 @@ impl Game {
             barrier_row.push(GameObject::new(
                 barrier_x,
                 CANVAS_HEIGHT - HEIGHT_DIV_4,
-                24,
-                18,
+                24 * PIXEL_SIZE,
+                18 * PIXEL_SIZE,
                 String::from("barrier_texture"),
             ));
 
@@ -247,7 +247,7 @@ impl Game {
         }
     }
 
-    pub fn get_invader_barrier_textures(&self) -> [Vec<GameObject>; 6] {
+    pub fn get_all_invaders(&self) -> Vec<GameObject> {
         let invader_row1_game_object: Vec<GameObject> = self
             .invader_row1
             .iter()
@@ -278,16 +278,14 @@ impl Game {
             .map(|i| i.game_object.clone())
             .collect();
 
-        let barrier_game_object = self.barrier_row.clone();
-
         [
             invader_row1_game_object,
             invader_row2_game_object,
             invader_row3_game_object,
             invader_row4_game_object,
             invader_row5_game_object,
-            barrier_game_object,
         ]
+        .concat()
     }
 
     pub fn update(&mut self) {
