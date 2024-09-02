@@ -111,6 +111,7 @@ impl Player {
 pub struct Invader {
     pub game_object: GameObject,
     pub row: u32,
+    pub dir: String,
 }
 
 impl Invader {
@@ -118,6 +119,7 @@ impl Invader {
         Invader {
             game_object: GameObject::new(x, y, width, height, texture_name),
             row,
+            dir: String::from("right"),
         }
     }
 
@@ -129,7 +131,7 @@ impl Invader {
         self.game_object.x -= 1;
     }
 
-    fn move_y(&mut self) {
+    fn move_down(&mut self) {
         self.game_object.y -= 1;
     }
 }
@@ -263,8 +265,28 @@ impl Game {
 
         invaders_next.retain(|r| !r.game_object.is_destroyed);
 
-        for object in &mut invaders_next {
-            object.move_x_right();
+        let mut move_down = false;
+        for invader in &invaders_next {
+            if invader.game_object.x == CANVAS_WIDTH {
+                move_down = true;
+                break;
+            }
+        }
+
+        for invader in &mut invaders_next {
+            if move_down {
+                invader.move_down();
+
+                if invader.dir == "right" {
+                    invader.dir = String::from("left");
+                }
+            }
+
+            if invader.dir == "right" {
+                invader.move_x_right();
+            } else {
+                invader.move_x_left();
+            }
         }
 
         self.invaders = invaders_next;
