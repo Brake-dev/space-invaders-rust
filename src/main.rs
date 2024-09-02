@@ -97,7 +97,7 @@ fn main() -> Result<(), String> {
 
         thread::sleep(Duration::new(0, 1_000_000_000u32 / 60));
 
-        for invader in game.get_all_invaders() {
+        for invader in game.get_all_invader_objects() {
             draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
         }
 
@@ -118,11 +118,20 @@ fn main() -> Result<(), String> {
 
         canvas.present();
 
-        for bullet in &player.bullets {
-            for invader in &game.get_all_invaders() {
-                overlaps(invader, bullet);
+        let mut next_bullets = player.bullets.clone();
+        let mut next_invaders = game.get_all_invader_objects();
+
+        for bullet in &mut next_bullets {
+            for invader in &mut next_invaders {
+                if overlaps(&invader, &bullet) {
+                    invader.is_destroyed = true;
+                    bullet.is_destroyed = true;
+                }
             }
         }
+
+        player.bullets = next_bullets;
+        game.set_all_invader_objects(next_invaders);
 
         game.update();
         player.update();

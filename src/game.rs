@@ -21,6 +21,7 @@ pub struct GameObject {
     pub width: u32,
     pub height: u32,
     pub texture_name: String,
+    pub is_destroyed: bool,
 }
 
 impl GameObject {
@@ -31,6 +32,7 @@ impl GameObject {
             width,
             height,
             texture_name,
+            is_destroyed: false,
         }
     }
 }
@@ -94,7 +96,7 @@ impl Player {
         if !self.bullets.is_empty() {
             let mut next_bullets = self.bullets.clone();
 
-            next_bullets.retain(|b| b.y - 10 > 10);
+            next_bullets.retain(|b| b.y - 10 > 10 && !b.is_destroyed);
 
             for bullet in &mut next_bullets {
                 bullet.y -= 10;
@@ -104,15 +106,18 @@ impl Player {
         }
     }
 }
+
 #[derive(Clone)]
 pub struct Invader {
     pub game_object: GameObject,
+    pub row: u32,
 }
 
 impl Invader {
-    pub fn new(x: u32, y: u32, width: u32, height: u32, texture_name: String) -> Self {
+    pub fn new(x: u32, y: u32, width: u32, height: u32, texture_name: String, row: u32) -> Self {
         Invader {
             game_object: GameObject::new(x, y, width, height, texture_name),
+            row,
         }
     }
 
@@ -130,21 +135,13 @@ impl Invader {
 }
 
 pub struct Game {
-    pub invader_row1: Vec<Invader>,
-    pub invader_row2: Vec<Invader>,
-    pub invader_row3: Vec<Invader>,
-    pub invader_row4: Vec<Invader>,
-    pub invader_row5: Vec<Invader>,
+    pub invaders: Vec<Invader>,
     pub barrier_row: Vec<GameObject>,
 }
 
 impl Game {
     pub fn new() -> Self {
-        let mut invader_row1 = vec![];
-        let mut invader_row2 = vec![];
-        let mut invader_row3 = vec![];
-        let mut invader_row4 = vec![];
-        let mut invader_row5 = vec![];
+        let mut invaders = vec![];
 
         let mut barrier_row = vec![];
 
@@ -152,12 +149,13 @@ impl Game {
         let mut cur_y = CANVAS_HEIGHT / 6;
 
         for _i in 0..ROW_SIZE {
-            invader_row1.push(Invader::new(
+            invaders.push(Invader::new(
                 cur_x,
                 cur_y,
                 8 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture1"),
+                1,
             ));
 
             cur_x += (8 * PIXEL_SIZE) + WIDTH_DIV_80 * 2;
@@ -167,12 +165,13 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row2.push(Invader::new(
+            invaders.push(Invader::new(
                 cur_x,
                 cur_y,
                 11 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
+                2,
             ));
 
             cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
@@ -182,12 +181,13 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row3.push(Invader::new(
+            invaders.push(Invader::new(
                 cur_x,
                 cur_y,
                 11 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
+                3,
             ));
 
             cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
@@ -197,12 +197,13 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row4.push(Invader::new(
+            invaders.push(Invader::new(
                 cur_x,
                 cur_y,
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
+                4,
             ));
 
             cur_x += (12 * PIXEL_SIZE) + WIDTH_DIV_80;
@@ -212,12 +213,13 @@ impl Game {
         cur_y += WIDTH_DIV_20;
 
         for _i in 0..ROW_SIZE {
-            invader_row5.push(Invader::new(
+            invaders.push(Invader::new(
                 cur_x,
                 cur_y,
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
+                5,
             ));
 
             cur_x += (12 * PIXEL_SIZE) + WIDTH_DIV_80;
@@ -238,87 +240,33 @@ impl Game {
         }
 
         Game {
-            invader_row1,
-            invader_row2,
-            invader_row3,
-            invader_row4,
-            invader_row5,
+            invaders,
             barrier_row,
         }
     }
 
-    pub fn get_all_invaders(&self) -> Vec<GameObject> {
-        let invader_row1_game_object: Vec<GameObject> = self
-            .invader_row1
+    pub fn set_all_invader_objects(&mut self, next_objects: Vec<GameObject>) {
+        for (i, invader) in &mut self.invaders.iter_mut().enumerate() {
+            invader.game_object = next_objects[i].clone();
+        }
+    }
+
+    pub fn get_all_invader_objects(&self) -> Vec<GameObject> {
+        self.invaders
             .iter()
             .map(|i| i.game_object.clone())
-            .collect();
-
-        let invader_row2_game_object: Vec<GameObject> = self
-            .invader_row2
-            .iter()
-            .map(|i| i.game_object.clone())
-            .collect();
-
-        let invader_row3_game_object: Vec<GameObject> = self
-            .invader_row3
-            .iter()
-            .map(|i| i.game_object.clone())
-            .collect();
-
-        let invader_row4_game_object: Vec<GameObject> = self
-            .invader_row4
-            .iter()
-            .map(|i| i.game_object.clone())
-            .collect();
-
-        let invader_row5_game_object: Vec<GameObject> = self
-            .invader_row5
-            .iter()
-            .map(|i| i.game_object.clone())
-            .collect();
-
-        [
-            invader_row1_game_object,
-            invader_row2_game_object,
-            invader_row3_game_object,
-            invader_row4_game_object,
-            invader_row5_game_object,
-        ]
-        .concat()
+            .collect()
     }
 
     pub fn update(&mut self) {
-        let mut invader_row1_next = self.invader_row1.clone();
-        let mut invader_row2_next = self.invader_row2.clone();
-        let mut invader_row3_next = self.invader_row3.clone();
-        let mut invader_row4_next = self.invader_row4.clone();
-        let mut invader_row5_next = self.invader_row5.clone();
+        let mut invaders_next = self.invaders.clone();
 
-        for object in &mut invader_row1_next {
+        invaders_next.retain(|r| !r.game_object.is_destroyed);
+
+        for object in &mut invaders_next {
             object.move_x_right();
         }
 
-        for object in &mut invader_row2_next {
-            object.move_x_right();
-        }
-
-        for object in &mut invader_row3_next {
-            object.move_x_right();
-        }
-
-        for object in &mut invader_row4_next {
-            object.move_x_right();
-        }
-
-        for object in &mut invader_row5_next {
-            object.move_x_right();
-        }
-
-        self.invader_row1 = invader_row1_next;
-        self.invader_row2 = invader_row2_next;
-        self.invader_row3 = invader_row3_next;
-        self.invader_row4 = invader_row4_next;
-        self.invader_row5 = invader_row5_next;
+        self.invaders = invaders_next;
     }
 }

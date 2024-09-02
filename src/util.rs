@@ -25,14 +25,12 @@ pub fn draw_texture<'a>(
     )
 }
 
-pub fn overlaps(a: &GameObject, b: &GameObject) {
+pub fn overlaps(a: &GameObject, b: &GameObject) -> bool {
     let a_xmax = a.x + a.width;
     let a_ymax = a.y + a.height;
 
     let b_xmax = b.x + b.width;
     let b_ymax = b.y + b.height;
 
-    if a_xmax > b.x && b_xmax > a.x && a_ymax > b.y && b_ymax > a.y {
-        println!("Collide!");
-    }
+    a_xmax > b.x && b_xmax > a.x && a_ymax > b.y && b_ymax > a.y
 }
