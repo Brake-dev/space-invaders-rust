@@ -7,3 +7,6 @@ edition = "2021"
 version = "0.37"
 default-features = false
 features = ["ttf", "image", "gfx", "mixer"]
+
+[dependencies]
+rand = "0.8"
