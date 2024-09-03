@@ -9,11 +9,14 @@ use std::thread;
 use std::time::Duration;
 
 mod game;
+mod invader;
+mod player;
 mod texture_templates;
 mod textures;
 mod util;
 
-use crate::game::{Game, Player, CANVAS_HEIGHT, CANVAS_WIDTH};
+use crate::game::{Game, CANVAS_HEIGHT, CANVAS_WIDTH};
+use crate::player::Player;
 use crate::textures::textures;
 use crate::util::{draw_texture, overlaps};
 
