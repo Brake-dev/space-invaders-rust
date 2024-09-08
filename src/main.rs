@@ -104,6 +104,10 @@ fn main() -> Result<(), String> {
             draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
         }
 
+        for shot in &game.invader_shots {
+            draw_texture(&mut canvas, &textures, &missing_texture, &shot)?;
+        }
+
         for object in &game.barrier_row {
             draw_texture(&mut canvas, &textures, &missing_texture, &object)?;
         }

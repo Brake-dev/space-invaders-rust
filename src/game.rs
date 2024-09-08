@@ -1,3 +1,7 @@
+use rand::{self, thread_rng, Rng};
+
+use crate::invader::Invader;
+
 pub const PIXEL_SIZE: u32 = 6;
 pub const CANVAS_WIDTH: u32 = 1920;
 pub const CANVAS_HEIGHT: u32 = 1080;
@@ -15,7 +19,7 @@ const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
 
 const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
 
-use crate::invader::Invader;
+const INVADER_SHOT_DELAY: u32 = 100;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
@@ -43,6 +47,8 @@ impl GameObject {
 pub struct Game {
     pub invaders: Vec<Invader>,
     pub barrier_row: Vec<GameObject>,
+    pub invader_shots: Vec<GameObject>,
+    invader_shot_timer: u32,
 }
 
 impl Game {
@@ -61,7 +67,7 @@ impl Game {
                 8 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture1"),
-                1,
+                0,
                 i,
             ));
 
@@ -69,6 +75,23 @@ impl Game {
         }
 
         cur_x = WIDTH_DIV_4;
+        cur_y += WIDTH_DIV_20;
+
+        for i in 0..ROW_SIZE {
+            invaders.push(Invader::new(
+                cur_x,
+                cur_y,
+                11 * PIXEL_SIZE,
+                8 * PIXEL_SIZE,
+                String::from("invader_texture2"),
+                1,
+                i,
+            ));
+
+            cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
+        }
+
+        cur_x = WIDTH_DIV_4 - WIDTH_DIV_240;
         cur_y += WIDTH_DIV_20;
 
         for i in 0..ROW_SIZE {
@@ -92,27 +115,10 @@ impl Game {
             invaders.push(Invader::new(
                 cur_x,
                 cur_y,
-                11 * PIXEL_SIZE,
-                8 * PIXEL_SIZE,
-                String::from("invader_texture2"),
-                3,
-                i,
-            ));
-
-            cur_x += (11 * PIXEL_SIZE) + WIDTH_DIV_80 + WIDTH_DIV_320;
-        }
-
-        cur_x = WIDTH_DIV_4 - WIDTH_DIV_240;
-        cur_y += WIDTH_DIV_20;
-
-        for i in 0..ROW_SIZE {
-            invaders.push(Invader::new(
-                cur_x,
-                cur_y,
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
-                4,
+                3,
                 i,
             ));
 
@@ -129,7 +135,7 @@ impl Game {
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
-                5,
+                4,
                 i,
             ));
 
@@ -153,6 +159,8 @@ impl Game {
         Game {
             invaders,
             barrier_row,
+            invader_shots: vec![],
+            invader_shot_timer: 0,
         }
     }
 
@@ -167,6 +175,35 @@ impl Game {
             .iter()
             .map(|i| i.game_object.clone())
             .collect()
+    }
+
+    pub fn get_last_invader_per_column(&self) -> Vec<i32> {
+        let mut columns: Vec<i32> = vec![-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
+
+        for (i, invader) in self.invaders.iter().enumerate() {
+            if columns[invader.column as usize] == -1 || columns[invader.column as usize] < i as i32
+            {
+                columns[invader.column as usize] = i as i32;
+            }
+        }
+
+        columns.retain(|i| *i != -1);
+
+        columns
+    }
+
+    pub fn get_invader_shooters(&self) -> Vec<i32> {
+        let invader_indices = self.get_last_invader_per_column();
+        let num = thread_rng().gen_range(1..invader_indices.len());
+
+        let shooters: Vec<i32> = (0..num)
+            .map(|_| {
+                let index = thread_rng().gen_range(0..invader_indices.len());
+                invader_indices[index]
+            })
+            .collect();
+
+        shooters
     }
 
     pub fn update(&mut self) {
@@ -204,5 +241,34 @@ impl Game {
         }
 
         self.invaders = invaders_next;
+
+        self.invader_shot_timer += 1;
+
+        if self.invader_shot_timer >= INVADER_SHOT_DELAY {
+            let new_shots = self.get_invader_shooters();
+
+            for shot in new_shots {
+                let invader = &self.invaders[shot as usize];
+
+                self.invader_shots.push(GameObject::new(
+                    invader.game_object.x + (invader.game_object.width / 2),
+                    invader.game_object.y + invader.game_object.height,
+                    3 * PIXEL_SIZE,
+                    7 * PIXEL_SIZE,
+                    String::from("invader_shot_texture"),
+                ));
+            }
+
+            self.invader_shot_timer = 0;
+        }
+
+        let mut invader_shots_next = self.invader_shots.clone();
+        invader_shots_next.retain(|s| !s.y > 10 && !s.is_destroyed);
+
+        for shot in &mut invader_shots_next {
+            shot.y += 10;
+        }
+
+        self.invader_shots = invader_shots_next;
     }
 }

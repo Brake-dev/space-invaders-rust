@@ -1,6 +1,6 @@
 use crate::game::{GameObject, PIXEL_SIZE};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Invader {
     pub game_object: GameObject,
     pub row: u32,
