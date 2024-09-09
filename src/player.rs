@@ -61,15 +61,11 @@ impl Player {
         }
 
         if !self.bullets.is_empty() {
-            let mut next_bullets = self.bullets.clone();
+            self.bullets.retain(|b| b.y - 10 > 10 && !b.is_destroyed);
 
-            next_bullets.retain(|b| b.y - 10 > 10 && !b.is_destroyed);
-
-            for bullet in &mut next_bullets {
+            for bullet in &mut self.bullets {
                 bullet.y -= 10;
             }
-
-            self.bullets = next_bullets;
         }
     }
 }

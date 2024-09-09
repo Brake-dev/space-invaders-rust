@@ -7,7 +7,8 @@ use sdl2::video::{Window, WindowContext};
 
 use crate::game::PIXEL_SIZE;
 use crate::texture_templates::{
-    BARRIER, INVADER_1, INVADER_2, INVADER_3, INVADER_SHOT, MISSING_TEXTURE, PLAYER, SHOT,
+    BARRIER, EXPLOSION, INVADER_1, INVADER_2, INVADER_3, INVADER_SHOT, MISSING_TEXTURE, PLAYER,
+    SHOT,
 };
 
 pub fn textures<'a>(
@@ -32,6 +33,10 @@ pub fn textures<'a>(
 
     let mut shot_texture = texture_creator
         .create_texture_target(None, 1, SHOT.len() as u32)
+        .map_err(|e| e.to_string())?;
+
+    let mut explosion_texture = texture_creator
+        .create_texture_target(None, EXPLOSION[0].len() as u32, EXPLOSION.len() as u32)
         .map_err(|e| e.to_string())?;
 
     let mut invader_shot_texture = texture_creator
@@ -154,6 +159,27 @@ pub fn textures<'a>(
         .map_err(|e| e.to_string())?;
 
     canvas
+        .with_texture_canvas(&mut explosion_texture, |texture_canvas| {
+            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.clear();
+
+            for (i, _) in EXPLOSION.iter().enumerate() {
+                for (j, val) in EXPLOSION[i].iter().enumerate() {
+                    if *val == 0 {
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
+                    } else {
+                        texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
+                    }
+
+                    texture_canvas
+                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .expect("could not draw rect");
+                }
+            }
+        })
+        .map_err(|e| e.to_string())?;
+
+    canvas
         .with_texture_canvas(&mut invader_shot_texture, |texture_canvas| {
             texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
             texture_canvas.clear();
@@ -222,6 +248,7 @@ pub fn textures<'a>(
     hash.insert(String::from("invader_texture3"), invader_texture3);
     hash.insert(String::from("player_texture"), player_texture);
     hash.insert(String::from("shot_texture"), shot_texture);
+    hash.insert(String::from("explosion_texture"), explosion_texture);
     hash.insert(String::from("invader_shot_texture"), invader_shot_texture);
     hash.insert(String::from("barrier_texture"), barrier_texture);
 

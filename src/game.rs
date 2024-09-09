@@ -20,6 +20,7 @@ const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
 const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
 
 const INVADER_SHOT_DELAY: u32 = 100;
+const EXPLOSION_TIMER: u32 = 5;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
@@ -48,7 +49,9 @@ pub struct Game {
     pub invaders: Vec<Invader>,
     pub barrier_row: Vec<GameObject>,
     pub invader_shots: Vec<GameObject>,
+    pub explosions: Vec<GameObject>,
     invader_shot_timer: u32,
+    explosion_timer: u32,
 }
 
 impl Game {
@@ -160,7 +163,9 @@ impl Game {
             invaders,
             barrier_row,
             invader_shots: vec![],
+            explosions: vec![],
             invader_shot_timer: 0,
+            explosion_timer: EXPLOSION_TIMER,
         }
     }
 
@@ -177,8 +182,8 @@ impl Game {
             .collect()
     }
 
-    pub fn get_last_invader_per_column(&self) -> Vec<i32> {
-        let mut columns: Vec<i32> = vec![-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1];
+    fn get_last_invader_per_column(&self) -> Vec<i32> {
+        let mut columns: Vec<i32> = vec![-1; ROW_SIZE as usize];
 
         for (i, invader) in self.invaders.iter().enumerate() {
             if columns[invader.column as usize] == -1 || columns[invader.column as usize] < i as i32
@@ -192,7 +197,7 @@ impl Game {
         columns
     }
 
-    pub fn get_invader_shooters(&self) -> Vec<i32> {
+    fn get_invader_shooters(&self) -> Vec<i32> {
         let invader_indices = self.get_last_invader_per_column();
         let num = thread_rng().gen_range(1..invader_indices.len());
 
@@ -207,12 +212,30 @@ impl Game {
     }
 
     pub fn update(&mut self) {
-        let mut invaders_next = self.invaders.clone();
+        if self.explosion_timer > 0 {
+            self.explosion_timer -= 1;
+        } else {
+            self.explosions = vec![];
+        }
 
-        invaders_next.retain(|r| !r.game_object.is_destroyed);
+        for invader in &self.invaders {
+            if invader.game_object.is_destroyed {
+                self.explosion_timer = EXPLOSION_TIMER;
+
+                self.explosions.push(GameObject::new(
+                    invader.game_object.x,
+                    invader.game_object.y,
+                    12 * PIXEL_SIZE,
+                    10 * PIXEL_SIZE,
+                    String::from("explosion_texture"),
+                ));
+            }
+        }
+
+        self.invaders.retain(|r| !r.game_object.is_destroyed);
 
         let mut move_down = false;
-        for invader in &invaders_next {
+        for invader in &self.invaders {
             if invader.game_object.x == CANVAS_RIGHT_EDGE {
                 move_down = true;
                 break;
@@ -222,7 +245,7 @@ impl Game {
             }
         }
 
-        for invader in &mut invaders_next {
+        for invader in &mut self.invaders {
             if move_down {
                 invader.move_down();
 
@@ -239,8 +262,6 @@ impl Game {
                 invader.move_x_left();
             }
         }
-
-        self.invaders = invaders_next;
 
         self.invader_shot_timer += 1;
 
@@ -262,13 +283,10 @@ impl Game {
             self.invader_shot_timer = 0;
         }
 
-        let mut invader_shots_next = self.invader_shots.clone();
-        invader_shots_next.retain(|s| !s.y > 10 && !s.is_destroyed);
+        self.invader_shots.retain(|s| !s.y > 10 && !s.is_destroyed);
 
-        for shot in &mut invader_shots_next {
+        for shot in &mut self.invader_shots {
             shot.y += 10;
         }
-
-        self.invader_shots = invader_shots_next;
     }
 }
