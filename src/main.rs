@@ -14,7 +14,7 @@ mod texture_templates;
 mod textures;
 mod util;
 
-use crate::game::{Game, CANVAS_HEIGHT, CANVAS_WIDTH};
+use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::player::Player;
 use crate::textures::textures;
 use crate::util::{draw_texture, overlaps};
@@ -50,6 +50,8 @@ fn main() -> Result<(), String> {
     let mut prev_keys = HashSet::new();
 
     let mut shot_timer = 0;
+    let mut player_explosion_timer = 0;
+    let mut game_over_timer = 0;
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -102,52 +104,97 @@ fn main() -> Result<(), String> {
 
         fps_manager.delay();
 
-        for invader in game.get_all_invader_objects() {
-            draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
-        }
+        if game.state != State::Paused {
+            for invader in game.get_all_invader_objects() {
+                draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
+            }
 
-        for shot in &game.invader_shots {
-            draw_texture(&mut canvas, &textures, &missing_texture, &shot)?;
-        }
+            for shot in &game.invader_shots {
+                draw_texture(&mut canvas, &textures, &missing_texture, &shot)?;
+            }
 
-        for explosion in &game.explosions {
-            draw_texture(&mut canvas, &textures, &missing_texture, &explosion)?;
-        }
+            for explosion in &game.explosions {
+                draw_texture(&mut canvas, &textures, &missing_texture, &explosion)?;
+            }
 
-        for object in &game.barrier_row {
-            draw_texture(&mut canvas, &textures, &missing_texture, &object)?;
-        }
+            for object in &game.barrier_row {
+                draw_texture(&mut canvas, &textures, &missing_texture, &object)?;
+            }
 
-        draw_texture(
-            &mut canvas,
-            &textures,
-            &missing_texture,
-            &player.game_object,
-        )?;
+            if !player.game_object.is_destroyed {
+                draw_texture(
+                    &mut canvas,
+                    &textures,
+                    &missing_texture,
+                    &player.game_object,
+                )?;
+            } else {
+                player_explosion_timer += 1;
+                game_over_timer += 1;
+            }
 
-        for bullet in &player.bullets {
-            draw_texture(&mut canvas, &textures, &missing_texture, &bullet)?;
-        }
+            if player_explosion_timer > 0 && player_explosion_timer < 10 {
+                draw_texture(
+                    &mut canvas,
+                    &textures,
+                    &missing_texture,
+                    &GameObject::new(
+                        player.game_object.x,
+                        player.game_object.y,
+                        12 * PIXEL_SIZE,
+                        10 * PIXEL_SIZE,
+                        String::from("explosion_texture"),
+                    ),
+                )?;
+            }
 
-        canvas.present();
+            if game_over_timer > 210 {
+                game.toggle_state();
+            }
 
-        let mut next_bullets = player.bullets.clone();
-        let mut next_invaders = game.get_all_invader_objects();
+            for bullet in &player.bullets {
+                draw_texture(&mut canvas, &textures, &missing_texture, &bullet)?;
+            }
 
-        for bullet in &mut next_bullets {
+            canvas.present();
+
+            let mut next_bullets = player.bullets.clone();
+            let mut next_invaders = game.get_all_invader_objects();
+            let mut next_invader_shots = game.invader_shots.clone();
+
             for invader in &mut next_invaders {
-                if overlaps(&invader, &bullet) {
-                    invader.is_destroyed = true;
-                    bullet.is_destroyed = true;
+                if overlaps(&invader, &player.game_object) {
+                    player.game_object.is_destroyed = true;
+                }
+
+                for bullet in &mut next_bullets {
+                    if overlaps(&invader, &bullet) {
+                        invader.is_destroyed = true;
+                        bullet.is_destroyed = true;
+                    }
                 }
             }
+
+            for invader_shot in &mut next_invader_shots {
+                if overlaps(&invader_shot, &player.game_object) {
+                    player.game_object.is_destroyed = true;
+                }
+
+                for bullet in &mut next_bullets {
+                    if overlaps(&invader_shot, &bullet) {
+                        invader_shot.is_destroyed = true;
+                        bullet.is_destroyed = true;
+                    }
+                }
+            }
+
+            player.bullets = next_bullets;
+            game.set_all_invader_objects(next_invaders);
+            game.invader_shots = next_invader_shots;
+
+            game.update();
+            player.update();
         }
-
-        player.bullets = next_bullets;
-        game.set_all_invader_objects(next_invaders);
-
-        game.update();
-        player.update();
     }
 
     Ok(())

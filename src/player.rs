@@ -52,6 +52,10 @@ impl Player {
     }
 
     pub fn update(&mut self) {
+        if self.game_object.is_destroyed {
+            return;
+        }
+
         if self.moving_left && self.game_object.x > CANVAS_LEFT_EDGE {
             self.game_object.x -= 10;
         }

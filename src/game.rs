@@ -52,6 +52,13 @@ pub struct Game {
     pub explosions: Vec<GameObject>,
     invader_shot_timer: u32,
     explosion_timer: u32,
+    pub state: State,
+}
+
+#[derive(PartialEq)]
+pub enum State {
+    Playing,
+    Paused,
 }
 
 impl Game {
@@ -166,6 +173,7 @@ impl Game {
             explosions: vec![],
             invader_shot_timer: 0,
             explosion_timer: EXPLOSION_TIMER,
+            state: State::Playing,
         }
     }
 
@@ -209,6 +217,13 @@ impl Game {
             .collect();
 
         shooters
+    }
+
+    pub fn toggle_state(&mut self) {
+        self.state = match self.state {
+            State::Paused => State::Playing,
+            State::Playing => State::Paused,
+        }
     }
 
     pub fn update(&mut self) {
@@ -281,6 +296,20 @@ impl Game {
             }
 
             self.invader_shot_timer = 0;
+        }
+
+        for invader_shot in &self.invader_shots {
+            if invader_shot.is_destroyed {
+                self.explosion_timer = EXPLOSION_TIMER;
+
+                self.explosions.push(GameObject::new(
+                    invader_shot.x,
+                    invader_shot.y,
+                    12 * PIXEL_SIZE,
+                    10 * PIXEL_SIZE,
+                    String::from("explosion_texture"),
+                ));
+            }
         }
 
         self.invader_shots.retain(|s| !s.y > 10 && !s.is_destroyed);
