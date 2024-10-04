@@ -12,11 +12,13 @@ mod invader;
 mod player;
 mod texture_templates;
 mod textures;
+mod ui;
 mod util;
 
 use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::player::Player;
 use crate::textures::textures;
+use crate::ui::create_ui;
 use crate::util::{draw_texture, overlaps};
 
 fn main() -> Result<(), String> {
@@ -44,6 +46,7 @@ fn main() -> Result<(), String> {
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
     let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
+    let (ui_textures, modal_textures) = create_ui(&mut canvas, &texture_creator)?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -148,7 +151,7 @@ fn main() -> Result<(), String> {
                 )?;
             }
 
-            if game_over_timer > 210 {
+            if game_over_timer > 1 {
                 game.toggle_state();
             }
 
@@ -194,6 +197,19 @@ fn main() -> Result<(), String> {
 
             game.update();
             player.update();
+        } else {
+            canvas.set_draw_color(Color::RGB(0, 0, 0));
+            canvas.clear();
+
+            for ui_el in &modal_textures {
+                canvas.copy(ui_el.1, None, *ui_el.0)?;
+            }
+
+            for ui_el in &ui_textures {
+                canvas.copy(ui_el.1, None, *ui_el.0)?;
+            }
+
+            canvas.present();
         }
     }
 
