@@ -18,7 +18,7 @@ mod util;
 use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::player::Player;
 use crate::textures::textures;
-use crate::ui::create_ui;
+use crate::ui::{create_ui, UI};
 use crate::util::{draw_texture, overlaps};
 
 fn main() -> Result<(), String> {
@@ -46,8 +46,21 @@ fn main() -> Result<(), String> {
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
     let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
-    let (ui_textures, modal_textures) = create_ui(&mut canvas, &texture_creator)?;
+    let (modal_hash, arrow_texture, ui_texture_hash, ui_targets_hash, default_target) =
+        create_ui(&mut canvas, &texture_creator)?;
 
+    let mut ui = UI::new(
+        match ui_targets_hash.get("retry") {
+            Some(target) => *target,
+            None => default_target,
+        },
+        match ui_targets_hash.get("quit") {
+            Some(target) => *target,
+            None => default_target,
+        },
+    );
+
+    let event = sdl_context.event()?;
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut prev_keys = HashSet::new();
@@ -93,6 +106,16 @@ fn main() -> Result<(), String> {
             if new_keys.contains(&Keycode::Space) && shot_timer == 0 {
                 player.shoot();
                 shot_timer = 20;
+            }
+
+            if game.state == State::Paused {
+                if new_keys.contains(&Keycode::Up) || new_keys.contains(&Keycode::Down) {
+                    ui.update_cursor();
+                }
+
+                if new_keys.contains(&Keycode::KpEnter) || new_keys.contains(&Keycode::Space) {
+                    ui.select(&event);
+                }
             }
         }
 
@@ -201,12 +224,21 @@ fn main() -> Result<(), String> {
             canvas.set_draw_color(Color::RGB(0, 0, 0));
             canvas.clear();
 
-            for ui_el in &modal_textures {
+            for ui_el in &modal_hash {
                 canvas.copy(ui_el.1, None, *ui_el.0)?;
             }
 
-            for ui_el in &ui_textures {
-                canvas.copy(ui_el.1, None, *ui_el.0)?;
+            canvas.copy(&arrow_texture, None, ui.get_cursor_target())?;
+
+            for ui_el in &ui_texture_hash {
+                canvas.copy(
+                    ui_el.1,
+                    None,
+                    *match ui_targets_hash.get(ui_el.0) {
+                        Some(target) => target,
+                        None => &default_target,
+                    },
+                )?;
             }
 
             canvas.present();

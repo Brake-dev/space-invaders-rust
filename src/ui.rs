@@ -1,18 +1,75 @@
 use std::collections::HashMap;
 
+use sdl2::event::Event;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
+use sdl2::EventSubsystem;
 
 use crate::game::{CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
 
+#[derive(Copy, Clone)]
+pub struct UI {
+    pub targets: [Rect; 2],
+    pub cursor_pos: usize,
+}
+
+impl UI {
+    pub fn new(retry_target: Rect, quit_target: Rect) -> UI {
+        UI {
+            targets: [retry_target, quit_target],
+            cursor_pos: 0,
+        }
+    }
+
+    pub fn update_cursor(&mut self) {
+        if self.cursor_pos == 0 {
+            self.cursor_pos = 1;
+        } else {
+            self.cursor_pos = 0;
+        }
+    }
+
+    pub fn get_cursor_target(&self) -> Rect {
+        let target = self.targets[self.cursor_pos];
+
+        Rect::new(
+            target.left() - 200,
+            target.center().y() - (target.height() / 2) as i32,
+            ARROW[0].len() as u32 * PIXEL_SIZE * 2,
+            ARROW.len() as u32 * PIXEL_SIZE * 2,
+        )
+    }
+
+    pub fn select(&self, event: &EventSubsystem) {
+        if self.cursor_pos == 0 {
+            return ();
+        } else {
+            let result = event.push_event(Event::Quit { timestamp: (0) });
+            match result {
+                Ok(_) => (),
+                Err(_) => panic!("Error handling event"),
+            }
+        }
+    }
+}
+
 pub fn create_ui<'a>(
     canvas: &mut Canvas<Window>,
     texture_creator: &'a TextureCreator<WindowContext>,
-) -> Result<(HashMap<Rect, Texture<'a>>, HashMap<Rect, Texture<'a>>), String> {
+) -> Result<
+    (
+        HashMap<Rect, Texture<'a>>,
+        Texture<'a>,
+        HashMap<String, Texture<'a>>,
+        HashMap<String, Rect>,
+        Rect,
+    ),
+    String,
+> {
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
     let font = ttf_context.load_font("./src/PressStart2P-vaV7.ttf", (16 * PIXEL_SIZE) as u16)?;
 
@@ -75,12 +132,7 @@ pub fn create_ui<'a>(
         quit_query.height,
     );
 
-    let arrow_target = Rect::new(
-        retry_target.left() - 200,
-        retry_target.center().y() - (retry_target.height() / 2) as i32,
-        ARROW[0].len() as u32 * PIXEL_SIZE * 2,
-        ARROW.len() as u32 * PIXEL_SIZE * 2,
-    );
+    let default_target = Rect::new(0, 0, 0, 0);
 
     let mut modal_texture = texture_creator
         .create_texture_target(None, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2)
@@ -127,11 +179,21 @@ pub fn create_ui<'a>(
     let mut modal_hash: HashMap<Rect, Texture> = HashMap::new();
     modal_hash.insert(modal_target, modal_texture);
 
-    let mut ui_hash: HashMap<Rect, Texture> = HashMap::new();
-    ui_hash.insert(arrow_target, arrow_texture);
-    ui_hash.insert(game_over_target, game_over_texture);
-    ui_hash.insert(retry_target, retry_texture);
-    ui_hash.insert(quit_target, quit_texture);
+    let mut ui_texture_hash: HashMap<String, Texture> = HashMap::new();
+    ui_texture_hash.insert(String::from("game_over"), game_over_texture);
+    ui_texture_hash.insert(String::from("retry"), retry_texture);
+    ui_texture_hash.insert(String::from("quit"), quit_texture);
 
-    Ok((ui_hash, modal_hash))
+    let mut ui_target_hash: HashMap<String, Rect> = HashMap::new();
+    ui_target_hash.insert(String::from("game_over"), game_over_target);
+    ui_target_hash.insert(String::from("retry"), retry_target);
+    ui_target_hash.insert(String::from("quit"), quit_target);
+
+    Ok((
+        modal_hash,
+        arrow_texture,
+        ui_texture_hash,
+        ui_target_hash,
+        default_target,
+    ))
 }
