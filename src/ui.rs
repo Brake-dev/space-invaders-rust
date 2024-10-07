@@ -10,6 +10,7 @@ use sdl2::EventSubsystem;
 use crate::game::{CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
+use crate::RetryEvent;
 
 #[derive(Copy, Clone)]
 pub struct UI {
@@ -46,12 +47,16 @@ impl UI {
 
     pub fn select(&self, event: &EventSubsystem) {
         if self.cursor_pos == 0 {
-            return ();
+            let result = event.push_custom_event(RetryEvent);
+            match result {
+                Ok(_) => (),
+                Err(_) => panic!("Error handling retry event"),
+            }
         } else {
             let result = event.push_event(Event::Quit { timestamp: (0) });
             match result {
                 Ok(_) => (),
-                Err(_) => panic!("Error handling event"),
+                Err(_) => panic!("Error handling quit event"),
             }
         }
     }

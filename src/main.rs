@@ -21,6 +21,8 @@ use crate::textures::textures;
 use crate::ui::{create_ui, UI};
 use crate::util::{draw_texture, overlaps};
 
+pub struct RetryEvent;
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -63,9 +65,11 @@ fn main() -> Result<(), String> {
     let event = sdl_context.event()?;
     let mut event_pump = sdl_context.event_pump()?;
 
+    event.register_custom_event::<RetryEvent>()?;
+
     let mut prev_keys = HashSet::new();
 
-    let mut shot_timer = 0;
+    let mut shot_timer = 1;
     let mut player_explosion_timer = 0;
     let mut game_over_timer = 0;
 
@@ -78,6 +82,23 @@ fn main() -> Result<(), String> {
                     ..
                 } => break 'running,
                 _ => {}
+            }
+
+            if event.is_user_event() {
+                let retry = event.as_user_event_type::<RetryEvent>();
+                match retry {
+                    Some(_) => {
+                        game = Game::new();
+                        player = Player::new();
+
+                        prev_keys = HashSet::new();
+
+                        shot_timer = 1;
+                        player_explosion_timer = 0;
+                        game_over_timer = 0;
+                    }
+                    None => (),
+                }
             }
         }
 
@@ -113,7 +134,7 @@ fn main() -> Result<(), String> {
                     ui.update_cursor();
                 }
 
-                if new_keys.contains(&Keycode::KpEnter) || new_keys.contains(&Keycode::Space) {
+                if new_keys.contains(&Keycode::Return) || new_keys.contains(&Keycode::Space) {
                     ui.select(&event);
                 }
             }
