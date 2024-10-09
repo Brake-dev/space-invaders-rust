@@ -27,11 +27,11 @@ impl Invader {
     }
 
     pub fn move_x_right(&mut self) {
-        self.game_object.x += 1;
+        self.game_object.x += 10;
     }
 
     pub fn move_x_left(&mut self) {
-        self.game_object.x -= 1;
+        self.game_object.x -= 10;
     }
 
     pub fn move_down(&mut self) {

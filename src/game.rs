@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use rand::{self, thread_rng, Rng};
 
 use crate::invader::Invader;
@@ -19,8 +21,10 @@ const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
 
 const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
 
-const INVADER_SHOT_DELAY: u32 = 100;
-const EXPLOSION_TIMER: u32 = 5;
+const INVADER_SHOT_DELAY: u32 = 10;
+const EXPLOSION_TIMER: u32 = 1;
+
+const INVADER_TICK: u32 = 50;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
@@ -53,6 +57,9 @@ pub struct Game {
     invader_shot_timer: u32,
     explosion_timer: u32,
     pub state: State,
+    timer: u32,
+    speed: u32,
+    move_rows_down: VecDeque<u32>,
 }
 
 #[derive(PartialEq)]
@@ -77,7 +84,7 @@ impl Game {
                 8 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture1"),
-                0,
+                4,
                 i,
             ));
 
@@ -94,7 +101,7 @@ impl Game {
                 11 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
-                1,
+                3,
                 i,
             ));
 
@@ -128,7 +135,7 @@ impl Game {
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
-                3,
+                1,
                 i,
             ));
 
@@ -145,7 +152,7 @@ impl Game {
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
-                4,
+                0,
                 i,
             ));
 
@@ -174,6 +181,9 @@ impl Game {
             invader_shot_timer: 0,
             explosion_timer: EXPLOSION_TIMER,
             state: State::Playing,
+            timer: 0,
+            speed: 1,
+            move_rows_down: VecDeque::new(),
         }
     }
 
@@ -207,7 +217,13 @@ impl Game {
 
     fn get_invader_shooters(&self) -> Vec<i32> {
         let invader_indices = self.get_last_invader_per_column();
-        let num = thread_rng().gen_range(1..invader_indices.len());
+
+        let mut max = 4;
+        if invader_indices.len() < max {
+            max = invader_indices.len();
+        }
+
+        let num = thread_rng().gen_range(1..max);
 
         let shooters: Vec<i32> = (0..num)
             .map(|_| {
@@ -249,55 +265,6 @@ impl Game {
 
         self.invaders.retain(|r| !r.game_object.is_destroyed);
 
-        let mut move_down = false;
-        for invader in &self.invaders {
-            if invader.game_object.x == CANVAS_RIGHT_EDGE {
-                move_down = true;
-                break;
-            } else if invader.game_object.x == CANVAS_LEFT_EDGE {
-                move_down = true;
-                break;
-            }
-        }
-
-        for invader in &mut self.invaders {
-            if move_down {
-                invader.move_down();
-
-                if invader.dir == "right" {
-                    invader.dir = String::from("left");
-                } else {
-                    invader.dir = String::from("right");
-                }
-            }
-
-            if invader.dir == "right" {
-                invader.move_x_right();
-            } else {
-                invader.move_x_left();
-            }
-        }
-
-        self.invader_shot_timer += 1;
-
-        if self.invader_shot_timer >= INVADER_SHOT_DELAY {
-            let new_shots = self.get_invader_shooters();
-
-            for shot in new_shots {
-                let invader = &self.invaders[shot as usize];
-
-                self.invader_shots.push(GameObject::new(
-                    invader.game_object.x + (invader.game_object.width / 2),
-                    invader.game_object.y + invader.game_object.height,
-                    3 * PIXEL_SIZE,
-                    7 * PIXEL_SIZE,
-                    String::from("invader_shot_texture"),
-                ));
-            }
-
-            self.invader_shot_timer = 0;
-        }
-
         for invader_shot in &self.invader_shots {
             if invader_shot.is_destroyed {
                 self.explosion_timer = EXPLOSION_TIMER;
@@ -316,6 +283,77 @@ impl Game {
 
         for shot in &mut self.invader_shots {
             shot.y += 10;
+        }
+
+        self.timer += 1 * self.speed;
+
+        if self.timer >= INVADER_TICK {
+            self.timer = 0;
+
+            let mut move_down = false;
+            if self.move_rows_down.len() == 0 {
+                for invader in &self.invaders {
+                    if invader.game_object.x == CANVAS_RIGHT_EDGE && invader.dir == "right" {
+                        move_down = true;
+                        break;
+                    } else if invader.game_object.x == CANVAS_LEFT_EDGE && invader.dir == "left" {
+                        move_down = true;
+                        break;
+                    }
+                }
+            }
+
+            if move_down {
+                for invader in &mut self.invaders {
+                    if !self.move_rows_down.contains(&invader.row) {
+                        self.move_rows_down.push_front(invader.row);
+                    }
+                }
+            }
+
+            if self.move_rows_down.len() == 0 {
+                for invader in &mut self.invaders {
+                    if invader.dir == "right" {
+                        invader.move_x_right();
+                    } else {
+                        invader.move_x_left();
+                    }
+                }
+            } else {
+                for invader in &mut self.invaders {
+                    if invader.row == self.move_rows_down[0] {
+                        invader.move_down();
+
+                        if invader.dir == "right" {
+                            invader.dir = String::from("left");
+                        } else {
+                            invader.dir = String::from("right");
+                        }
+                    }
+                }
+
+                self.move_rows_down.pop_front();
+            }
+
+            self.invader_shot_timer += 1;
+
+            if self.invader_shot_timer >= INVADER_SHOT_DELAY {
+                let new_shots = self.get_invader_shooters();
+
+                for shot in new_shots {
+                    let invader = &self.invaders[shot as usize];
+
+                    self.invader_shots.push(GameObject::new(
+                        invader.game_object.x + (invader.game_object.width / 2),
+                        invader.game_object.y + invader.game_object.height,
+                        3 * PIXEL_SIZE,
+                        7 * PIXEL_SIZE,
+                        String::from("invader_shot_texture"),
+                    ));
+                }
+
+                self.invader_shot_timer = 0;
+            }
         }
     }
 }
