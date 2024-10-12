@@ -12,10 +12,11 @@ mod invader;
 mod player;
 mod texture_templates;
 mod textures;
+mod ufo;
 mod ui;
 mod util;
 
-use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, FPS, PIXEL_SIZE};
 use crate::player::Player;
 use crate::textures::textures;
 use crate::ui::{create_ui, UI};
@@ -35,7 +36,7 @@ fn main() -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let mut fps_manager = FPSManager::new();
-    fps_manager.set_framerate(60)?;
+    fps_manager.set_framerate(FPS)?;
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
@@ -72,6 +73,7 @@ fn main() -> Result<(), String> {
     let mut shot_timer = 1;
     let mut player_explosion_timer = 0;
     let mut game_over_timer = 0;
+    let mut ufo_timer = game.get_next_ufo_time();
 
     'running: loop {
         for event in event_pump.poll_iter() {
@@ -195,6 +197,22 @@ fn main() -> Result<(), String> {
                 )?;
             }
 
+            if ufo_timer == 0 {
+                game.toggle_spawn_ufo();
+                ufo_timer = game.get_next_ufo_time();
+            } else {
+                ufo_timer -= 1;
+            }
+
+            if game.ufo_active {
+                draw_texture(
+                    &mut canvas,
+                    &textures,
+                    &missing_texture,
+                    &game.ufo.game_object,
+                )?;
+            }
+
             if game_over_timer > 1 {
                 game.toggle_state();
             }
@@ -217,6 +235,11 @@ fn main() -> Result<(), String> {
                 for bullet in &mut next_bullets {
                     if overlaps(&invader, &bullet) {
                         invader.is_destroyed = true;
+                        bullet.is_destroyed = true;
+                    }
+
+                    if overlaps(&game.ufo.game_object, &bullet) {
+                        game.ufo.game_object.is_destroyed = true;
                         bullet.is_destroyed = true;
                     }
                 }

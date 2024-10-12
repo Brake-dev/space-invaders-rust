@@ -3,6 +3,9 @@ use std::collections::VecDeque;
 use rand::{self, thread_rng, Rng};
 
 use crate::invader::Invader;
+use crate::ufo::UFO;
+
+pub const FPS: u32 = 60;
 
 pub const PIXEL_SIZE: u32 = 6;
 pub const CANVAS_WIDTH: u32 = 1920;
@@ -60,6 +63,10 @@ pub struct Game {
     timer: u32,
     speed: u32,
     move_rows_down: VecDeque<u32>,
+    pub ufo: UFO,
+    spawn_ufo: bool,
+    pub ufo_active: bool,
+    ufo_spawn_times: u32,
 }
 
 #[derive(PartialEq)]
@@ -184,6 +191,10 @@ impl Game {
             timer: 0,
             speed: 1,
             move_rows_down: VecDeque::new(),
+            ufo: UFO::new(0),
+            spawn_ufo: false,
+            ufo_active: false,
+            ufo_spawn_times: 0,
         }
     }
 
@@ -242,6 +253,20 @@ impl Game {
         }
     }
 
+    pub fn get_next_ufo_time(&self) -> u32 {
+        let adjust: i32 = thread_rng().gen_range(-5..=5);
+        let next = 30 + adjust;
+        next as u32 * FPS as u32
+    }
+
+    pub fn toggle_spawn_ufo(&mut self) {
+        if self.spawn_ufo == false {
+            self.ufo_spawn_times += 1;
+        }
+
+        self.spawn_ufo = !self.spawn_ufo;
+    }
+
     pub fn update(&mut self) {
         if self.explosion_timer > 0 {
             self.explosion_timer -= 1;
@@ -264,6 +289,35 @@ impl Game {
         }
 
         self.invaders.retain(|r| !r.game_object.is_destroyed);
+
+        if self.spawn_ufo {
+            self.toggle_spawn_ufo();
+            self.ufo_active = true;
+            self.ufo = UFO::new(self.ufo_spawn_times);
+        }
+
+        if self.ufo.game_object.x >= CANVAS_RIGHT_EDGE && self.ufo.dir == "right"
+            || self.ufo.game_object.x <= CANVAS_LEFT_EDGE && self.ufo.dir == "left"
+        {
+            self.ufo_active = false;
+        }
+
+        if self.ufo_active {
+            self.ufo.move_x();
+        }
+
+        if self.ufo.game_object.is_destroyed {
+            self.explosion_timer = EXPLOSION_TIMER;
+            self.ufo_active = false;
+
+            self.explosions.push(GameObject::new(
+                self.ufo.game_object.x,
+                self.ufo.game_object.y,
+                12 * PIXEL_SIZE,
+                10 * PIXEL_SIZE,
+                String::from("explosion_texture"),
+            ));
+        }
 
         for invader_shot in &self.invader_shots {
             if invader_shot.is_destroyed {
