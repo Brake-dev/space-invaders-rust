@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 
 use rand::{self, thread_rng, Rng};
 
+use crate::barrier::{Barrier, Collider};
 use crate::invader::Invader;
 use crate::ufo::UFO;
 
@@ -22,7 +23,7 @@ const WIDTH_DIV_80: u32 = CANVAS_WIDTH / 80;
 const WIDTH_DIV_240: u32 = CANVAS_WIDTH / 240;
 const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
 
-const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
+pub const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
 
 const INVADER_SHOT_DELAY: u32 = 10;
 const EXPLOSION_TIMER: u32 = 1;
@@ -54,7 +55,7 @@ impl GameObject {
 
 pub struct Game {
     pub invaders: Vec<Invader>,
-    pub barrier_row: Vec<GameObject>,
+    pub barrier_row: Vec<Barrier>,
     pub invader_shots: Vec<GameObject>,
     pub explosions: Vec<GameObject>,
     invader_shot_timer: u32,
@@ -169,14 +170,7 @@ impl Game {
         let mut barrier_x = WIDTH_DIV_24 * 2;
 
         for _i in 0..4 {
-            barrier_row.push(GameObject::new(
-                barrier_x,
-                CANVAS_HEIGHT - HEIGHT_DIV_4,
-                24 * PIXEL_SIZE,
-                18 * PIXEL_SIZE,
-                String::from("barrier_texture"),
-            ));
-
+            barrier_row.push(Barrier::new(barrier_x));
             barrier_x += WIDTH_DIV_4;
         }
 
@@ -244,6 +238,13 @@ impl Game {
             .collect();
 
         shooters
+    }
+
+    pub fn get_all_barrier_colliders(&self) -> Vec<Collider> {
+        self.barrier_row
+            .iter()
+            .flat_map(|c| c.colliders.clone())
+            .collect()
     }
 
     pub fn toggle_state(&mut self) {

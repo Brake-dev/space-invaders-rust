@@ -7,6 +7,7 @@ use sdl2::pixels::Color;
 use sdl2::render::TextureCreator;
 use std::collections::HashSet;
 
+mod barrier;
 mod game;
 mod invader;
 mod player;
@@ -51,6 +52,9 @@ fn main() -> Result<(), String> {
     let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
     let (modal_hash, arrow_texture, ui_texture_hash, ui_targets_hash, default_target) =
         create_ui(&mut canvas, &texture_creator)?;
+
+    let colliders = &game.get_all_barrier_colliders();
+    // let collider_textures = get_collider_textures(&mut canvas, &texture_creator, colliders)?;
 
     let mut ui = UI::new(
         match ui_targets_hash.get("retry") {
@@ -98,6 +102,7 @@ fn main() -> Result<(), String> {
                         shot_timer = 1;
                         player_explosion_timer = 0;
                         game_over_timer = 0;
+                        ufo_timer = game.get_next_ufo_time();
                     }
                     None => (),
                 }
@@ -154,8 +159,13 @@ fn main() -> Result<(), String> {
         fps_manager.delay();
 
         if game.state != State::Paused {
-            for invader in game.get_all_invader_objects() {
-                draw_texture(&mut canvas, &textures, &missing_texture, &invader)?;
+            for invader in &game.invaders {
+                draw_texture(
+                    &mut canvas,
+                    &textures,
+                    &missing_texture,
+                    &invader.game_object,
+                )?;
             }
 
             for shot in &game.invader_shots {
@@ -166,9 +176,18 @@ fn main() -> Result<(), String> {
                 draw_texture(&mut canvas, &textures, &missing_texture, &explosion)?;
             }
 
-            for object in &game.barrier_row {
-                draw_texture(&mut canvas, &textures, &missing_texture, &object)?;
+            for barrier in &game.barrier_row {
+                draw_texture(
+                    &mut canvas,
+                    &textures,
+                    &missing_texture,
+                    &barrier.game_object,
+                )?;
             }
+
+            // for (i, collider) in colliders.iter().enumerate() {
+            //     draw_texture_nameless(&mut canvas, &collider_textures[i], &collider.rect)?;
+            // }
 
             if !player.game_object.is_destroyed {
                 draw_texture(
@@ -238,7 +257,7 @@ fn main() -> Result<(), String> {
                         bullet.is_destroyed = true;
                     }
 
-                    if overlaps(&game.ufo.game_object, &bullet) {
+                    if overlaps(&game.ufo.game_object, &bullet) && game.ufo_active {
                         game.ufo.game_object.is_destroyed = true;
                         bullet.is_destroyed = true;
                     }

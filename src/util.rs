@@ -27,6 +27,14 @@ pub fn draw_texture<'a>(
     )
 }
 
+pub fn draw_texture_nameless<'a>(
+    canvas: &mut Canvas<Window>,
+    texture: &Texture<'a>,
+    rect: &Rect,
+) -> Result<(), String> {
+    canvas.copy(texture, None, *rect)
+}
+
 pub fn overlaps(a: &GameObject, b: &GameObject) -> bool {
     let a_xmax = a.x + a.width;
     let a_ymax = a.y + a.height;

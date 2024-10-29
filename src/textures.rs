@@ -5,6 +5,7 @@ use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 
+use crate::barrier::Collider;
 use crate::game::PIXEL_SIZE;
 use crate::texture_templates::{
     BARRIER, EXPLOSION, INVADER_1, INVADER_2, INVADER_3, INVADER_SHOT, MISSING_TEXTURE, PLAYER,
@@ -279,4 +280,51 @@ pub fn textures<'a>(
     hash.insert(String::from("ufo_texture"), ufo_texture);
 
     Ok((hash, missing_texture))
+}
+
+pub fn get_collider_textures<'a>(
+    canvas: &mut Canvas<Window>,
+    texture_creator: &'a TextureCreator<WindowContext>,
+    colliders: &Vec<Collider>,
+) -> Result<Vec<Texture<'a>>, String> {
+    let mut targets = vec![];
+
+    for collider in colliders {
+        let target = texture_creator
+            .create_texture_target(
+                None,
+                collider.rect.width() as u32,
+                collider.rect.height() as u32,
+            )
+            .map_err(|e| e.to_string())?;
+
+        targets.push((target, collider));
+    }
+
+    let mut targets_for_canvas = vec![];
+    for target in &mut targets {
+        targets_for_canvas.push((&mut target.0, target.1));
+    }
+
+    canvas
+        .with_multiple_texture_canvas(targets_for_canvas.iter(), |texture_canvas, collider| {
+            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.clear();
+
+            for item in 0..=collider.rect.y() {
+                texture_canvas.set_draw_color(Color::RGB(255, 0, 0));
+
+                texture_canvas
+                    .fill_rect(Rect::new(0, item, PIXEL_SIZE, PIXEL_SIZE))
+                    .expect("could not draw rect");
+            }
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut textures = vec![];
+    for target in targets {
+        textures.push(target.0);
+    }
+
+    Ok(textures)
 }
