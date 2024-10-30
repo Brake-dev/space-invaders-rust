@@ -30,7 +30,11 @@ fn main() -> Result<(), String> {
     let video_subsystem = sdl_context.video()?;
 
     let window = video_subsystem
-        .window("Space Invaders: Rust", CANVAS_WIDTH, CANVAS_HEIGHT)
+        .window(
+            "Space Invaders: Rust",
+            CANVAS_WIDTH as u32,
+            CANVAS_HEIGHT as u32,
+        )
         .position_centered()
         .opengl()
         .build()
@@ -207,10 +211,10 @@ fn main() -> Result<(), String> {
                     &textures,
                     &missing_texture,
                     &GameObject::new(
-                        player.game_object.x,
-                        player.game_object.y,
-                        12 * PIXEL_SIZE,
-                        10 * PIXEL_SIZE,
+                        player.game_object.rect.x,
+                        player.game_object.rect.y,
+                        12 * PIXEL_SIZE as u32,
+                        10 * PIXEL_SIZE as u32,
                         String::from("explosion_texture"),
                     ),
                 )?;
@@ -246,31 +250,31 @@ fn main() -> Result<(), String> {
             let mut next_invaders = game.get_all_invader_objects();
             let mut next_invader_shots = game.invader_shots.clone();
 
-            for invader in &mut next_invaders {
-                if overlaps(&invader, &player.game_object) {
-                    player.game_object.is_destroyed = true;
-                }
+            for bullet in &mut next_bullets {
+                for invader in &mut next_invaders {
+                    if overlaps(&invader.rect, &player.game_object.rect) {
+                        player.game_object.is_destroyed = true;
+                    }
 
-                for bullet in &mut next_bullets {
-                    if overlaps(&invader, &bullet) {
+                    if overlaps(&invader.rect, &bullet.rect) {
                         invader.is_destroyed = true;
                         bullet.is_destroyed = true;
                     }
+                }
 
-                    if overlaps(&game.ufo.game_object, &bullet) && game.ufo_active {
-                        game.ufo.game_object.is_destroyed = true;
-                        bullet.is_destroyed = true;
-                    }
+                if overlaps(&game.ufo.game_object.rect, &bullet.rect) && game.ufo_active {
+                    game.ufo.game_object.is_destroyed = true;
+                    bullet.is_destroyed = true;
                 }
             }
 
             for invader_shot in &mut next_invader_shots {
-                if overlaps(&invader_shot, &player.game_object) {
+                if overlaps(&invader_shot.rect, &player.game_object.rect) {
                     player.game_object.is_destroyed = true;
                 }
 
                 for bullet in &mut next_bullets {
-                    if overlaps(&invader_shot, &bullet) {
+                    if overlaps(&invader_shot.rect, &bullet.rect) {
                         invader_shot.is_destroyed = true;
                         bullet.is_destroyed = true;
                     }

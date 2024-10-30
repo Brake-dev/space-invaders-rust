@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use sdl2::rect::Rect;
+
 use rand::{self, thread_rng, Rng};
 
 use crate::barrier::{Barrier, Collider};
@@ -8,22 +10,22 @@ use crate::ufo::UFO;
 
 pub const FPS: u32 = 60;
 
-pub const PIXEL_SIZE: u32 = 6;
-pub const CANVAS_WIDTH: u32 = 1920;
-pub const CANVAS_HEIGHT: u32 = 1080;
-pub const CANVAS_RIGHT_EDGE: u32 = CANVAS_WIDTH - WIDTH_DIV_20 - 12 * PIXEL_SIZE;
-pub const CANVAS_LEFT_EDGE: u32 = WIDTH_DIV_20;
+pub const PIXEL_SIZE: i32 = 6;
+pub const CANVAS_WIDTH: i32 = 1920;
+pub const CANVAS_HEIGHT: i32 = 1080;
+pub const CANVAS_RIGHT_EDGE: i32 = CANVAS_WIDTH - WIDTH_DIV_20 - 12 * PIXEL_SIZE;
+pub const CANVAS_LEFT_EDGE: i32 = WIDTH_DIV_20;
 
 const ROW_SIZE: u32 = 11;
 
-const WIDTH_DIV_4: u32 = CANVAS_WIDTH / 4;
-const WIDTH_DIV_20: u32 = CANVAS_WIDTH / 20;
-const WIDTH_DIV_24: u32 = CANVAS_WIDTH / 24;
-const WIDTH_DIV_80: u32 = CANVAS_WIDTH / 80;
-const WIDTH_DIV_240: u32 = CANVAS_WIDTH / 240;
-const WIDTH_DIV_320: u32 = CANVAS_WIDTH / 320;
+const WIDTH_DIV_4: i32 = CANVAS_WIDTH / 4;
+const WIDTH_DIV_20: i32 = CANVAS_WIDTH / 20;
+const WIDTH_DIV_24: i32 = CANVAS_WIDTH / 24;
+const WIDTH_DIV_80: i32 = CANVAS_WIDTH / 80;
+const WIDTH_DIV_240: i32 = CANVAS_WIDTH / 240;
+const WIDTH_DIV_320: i32 = CANVAS_WIDTH / 320;
 
-pub const HEIGHT_DIV_4: u32 = CANVAS_HEIGHT / 4;
+pub const HEIGHT_DIV_4: i32 = CANVAS_HEIGHT / 4;
 
 const INVADER_SHOT_DELAY: u32 = 10;
 const EXPLOSION_TIMER: u32 = 1;
@@ -32,21 +34,15 @@ const INVADER_TICK: u32 = 50;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
-    pub x: u32,
-    pub y: u32,
-    pub width: u32,
-    pub height: u32,
+    pub rect: Rect,
     pub texture_name: String,
     pub is_destroyed: bool,
 }
 
 impl GameObject {
-    pub fn new(x: u32, y: u32, width: u32, height: u32, texture_name: String) -> Self {
+    pub fn new(x: i32, y: i32, width: u32, height: u32, texture_name: String) -> Self {
         GameObject {
-            x,
-            y,
-            width,
-            height,
+            rect: Rect::new(x, y, width, height),
             texture_name,
             is_destroyed: false,
         }
@@ -280,10 +276,10 @@ impl Game {
                 self.explosion_timer = EXPLOSION_TIMER;
 
                 self.explosions.push(GameObject::new(
-                    invader.game_object.x,
-                    invader.game_object.y,
-                    12 * PIXEL_SIZE,
-                    10 * PIXEL_SIZE,
+                    invader.game_object.rect.x,
+                    invader.game_object.rect.y,
+                    12 * PIXEL_SIZE as u32,
+                    10 * PIXEL_SIZE as u32,
                     String::from("explosion_texture"),
                 ));
             }
@@ -297,8 +293,8 @@ impl Game {
             self.ufo = UFO::new(self.ufo_spawn_times);
         }
 
-        if self.ufo.game_object.x >= CANVAS_RIGHT_EDGE && self.ufo.dir == "right"
-            || self.ufo.game_object.x <= CANVAS_LEFT_EDGE && self.ufo.dir == "left"
+        if self.ufo.game_object.rect.x >= CANVAS_RIGHT_EDGE && self.ufo.dir == "right"
+            || self.ufo.game_object.rect.x <= CANVAS_LEFT_EDGE && self.ufo.dir == "left"
         {
             self.ufo_active = false;
         }
@@ -312,10 +308,10 @@ impl Game {
             self.ufo_active = false;
 
             self.explosions.push(GameObject::new(
-                self.ufo.game_object.x,
-                self.ufo.game_object.y,
-                12 * PIXEL_SIZE,
-                10 * PIXEL_SIZE,
+                self.ufo.game_object.rect.x,
+                self.ufo.game_object.rect.y,
+                12 * PIXEL_SIZE as u32,
+                10 * PIXEL_SIZE as u32,
                 String::from("explosion_texture"),
             ));
         }
@@ -325,19 +321,20 @@ impl Game {
                 self.explosion_timer = EXPLOSION_TIMER;
 
                 self.explosions.push(GameObject::new(
-                    invader_shot.x,
-                    invader_shot.y,
-                    12 * PIXEL_SIZE,
-                    10 * PIXEL_SIZE,
+                    invader_shot.rect.x,
+                    invader_shot.rect.y,
+                    12 * PIXEL_SIZE as u32,
+                    10 * PIXEL_SIZE as u32,
                     String::from("explosion_texture"),
                 ));
             }
         }
 
-        self.invader_shots.retain(|s| !s.y > 10 && !s.is_destroyed);
+        self.invader_shots
+            .retain(|s| s.rect.y > 10 && !s.is_destroyed);
 
         for shot in &mut self.invader_shots {
-            shot.y += 10;
+            shot.rect.y += 10;
         }
 
         self.timer += 1 * self.speed;
@@ -348,10 +345,12 @@ impl Game {
             let mut move_down = false;
             if self.move_rows_down.len() == 0 {
                 for invader in &self.invaders {
-                    if invader.game_object.x == CANVAS_RIGHT_EDGE && invader.dir == "right" {
+                    if invader.game_object.rect.x == CANVAS_RIGHT_EDGE && invader.dir == "right" {
                         move_down = true;
                         break;
-                    } else if invader.game_object.x == CANVAS_LEFT_EDGE && invader.dir == "left" {
+                    } else if invader.game_object.rect.x == CANVAS_LEFT_EDGE
+                        && invader.dir == "left"
+                    {
                         move_down = true;
                         break;
                     }
@@ -399,10 +398,10 @@ impl Game {
                     let invader = &self.invaders[shot as usize];
 
                     self.invader_shots.push(GameObject::new(
-                        invader.game_object.x + (invader.game_object.width / 2),
-                        invader.game_object.y + invader.game_object.height,
-                        3 * PIXEL_SIZE,
-                        7 * PIXEL_SIZE,
+                        invader.game_object.rect.x + (invader.game_object.rect.width() / 2) as i32,
+                        invader.game_object.rect.y + invader.game_object.rect.height() as i32,
+                        3 * PIXEL_SIZE as u32,
+                        7 * PIXEL_SIZE as u32,
                         String::from("invader_shot_texture"),
                     ));
                 }

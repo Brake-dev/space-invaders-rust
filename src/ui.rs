@@ -40,8 +40,8 @@ impl UI {
         Rect::new(
             target.left() - 200,
             target.center().y() - (target.height() / 2) as i32,
-            ARROW[0].len() as u32 * PIXEL_SIZE * 2,
-            ARROW.len() as u32 * PIXEL_SIZE * 2,
+            ARROW[0].len() as u32 * PIXEL_SIZE as u32 * 2,
+            ARROW.len() as u32 * PIXEL_SIZE as u32 * 2,
         )
     }
 
@@ -81,8 +81,8 @@ pub fn create_ui<'a>(
     let modal_target = Rect::new(
         center_x(CANVAS_WIDTH / 2),
         center_y(CANVAS_HEIGHT / 2),
-        CANVAS_WIDTH / 2,
-        CANVAS_HEIGHT / 2,
+        (CANVAS_WIDTH / 2) as u32,
+        (CANVAS_HEIGHT / 2) as u32,
     );
 
     let game_over_surface = font
@@ -140,7 +140,7 @@ pub fn create_ui<'a>(
     let default_target = Rect::new(0, 0, 0, 0);
 
     let mut modal_texture = texture_creator
-        .create_texture_target(None, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2)
+        .create_texture_target(None, (CANVAS_WIDTH / 2) as u32, (CANVAS_HEIGHT / 2) as u32)
         .map_err(|e| e.to_string())?;
 
     let mut arrow_texture = texture_creator
@@ -155,7 +155,12 @@ pub fn create_ui<'a>(
             texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
 
             texture_canvas
-                .fill_rect(Rect::new(0, 0, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2))
+                .fill_rect(Rect::new(
+                    0,
+                    0,
+                    (CANVAS_WIDTH / 2) as u32,
+                    (CANVAS_HEIGHT / 2) as u32,
+                ))
                 .expect("could not draw rect");
         })
         .map_err(|e| e.to_string())?;
@@ -174,7 +179,12 @@ pub fn create_ui<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }

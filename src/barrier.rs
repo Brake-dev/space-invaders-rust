@@ -15,10 +15,10 @@ pub struct Barrier {
 }
 
 impl Barrier {
-    pub fn new(x: u32) -> Barrier {
+    pub fn new(x: i32) -> Barrier {
         let y = CANVAS_HEIGHT - HEIGHT_DIV_4;
-        let width = 24 * PIXEL_SIZE;
-        let height = 18 * PIXEL_SIZE;
+        let width = 24 * PIXEL_SIZE as u32;
+        let height = 18 * PIXEL_SIZE as u32;
 
         let game_object = GameObject::new(x, y, width, height, String::from("barrier_texture"));
         let colliders = Collider::get_colliders(&game_object);
@@ -31,9 +31,9 @@ impl Barrier {
 }
 
 impl Collider {
-    pub fn new(x: u32, y: u32, height: u32) -> Collider {
+    pub fn new(x: i32, y: i32, height: u32) -> Collider {
         Collider {
-            rect: Rect::new(x as i32, y as i32, PIXEL_SIZE, height * PIXEL_SIZE),
+            rect: Rect::new(x, y, PIXEL_SIZE as u32, height * PIXEL_SIZE as u32),
             is_destroyed: false,
         }
     }
@@ -66,21 +66,21 @@ impl Collider {
 
         for (i, _) in BARRIER[0].iter().enumerate() {
             if i == 0 || i == 23 {
-                next_y = barrier.y + (3 * PIXEL_SIZE);
+                next_y = barrier.rect.y + (3 * PIXEL_SIZE);
             } else if i == 1 || i == 22 {
-                next_y = barrier.y + (2 * PIXEL_SIZE);
+                next_y = barrier.rect.y + (2 * PIXEL_SIZE);
             } else if i == 2 || i == 21 {
-                next_y = barrier.y + PIXEL_SIZE;
+                next_y = barrier.rect.y + PIXEL_SIZE;
             } else {
-                next_y = barrier.y;
+                next_y = barrier.rect.y;
             }
 
-            next_x = barrier.x + (i as u32 * PIXEL_SIZE);
+            next_x = barrier.rect.x + (i as i32 * PIXEL_SIZE);
 
             for height in collider_heights[i] {
                 if height > 0 {
                     colliders.push(Collider::new(next_x, next_y, height));
-                    next_y = next_y + (height * PIXEL_SIZE);
+                    next_y = next_y + (height as i32 * PIXEL_SIZE);
                 }
             }
         }

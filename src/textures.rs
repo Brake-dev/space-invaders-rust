@@ -78,7 +78,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -99,7 +104,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -120,7 +130,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -141,7 +156,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -157,7 +177,7 @@ pub fn textures<'a>(
                 texture_canvas.set_draw_color(Color::RGB(255, 255, 255));
 
                 texture_canvas
-                    .fill_rect(Rect::new(0, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                    .fill_rect(Rect::new(0, i as i32, PIXEL_SIZE as u32, PIXEL_SIZE as u32))
                     .expect("could not draw rect");
             }
         })
@@ -177,7 +197,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -198,7 +223,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -219,7 +249,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -240,7 +275,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -261,7 +301,12 @@ pub fn textures<'a>(
                     }
 
                     texture_canvas
-                        .fill_rect(Rect::new(j as i32, i as i32, PIXEL_SIZE, PIXEL_SIZE))
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
                         .expect("could not draw rect");
                 }
             }
@@ -315,7 +360,7 @@ pub fn get_collider_textures<'a>(
                 texture_canvas.set_draw_color(Color::RGB(255, 0, 0));
 
                 texture_canvas
-                    .fill_rect(Rect::new(0, item, PIXEL_SIZE, PIXEL_SIZE))
+                    .fill_rect(Rect::new(0, item, PIXEL_SIZE as u32, PIXEL_SIZE as u32))
                     .expect("could not draw rect");
             }
         })

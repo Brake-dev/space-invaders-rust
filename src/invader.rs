@@ -10,16 +10,16 @@ pub struct Invader {
 
 impl Invader {
     pub fn new(
-        x: u32,
-        y: u32,
-        width: u32,
-        height: u32,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
         texture_name: String,
         row: u32,
         column: u32,
     ) -> Self {
         Invader {
-            game_object: GameObject::new(x, y, width, height, texture_name),
+            game_object: GameObject::new(x, y, width as u32, height as u32, texture_name),
             row,
             column,
             dir: String::from("right"),
@@ -27,14 +27,14 @@ impl Invader {
     }
 
     pub fn move_x_right(&mut self) {
-        self.game_object.x += 10;
+        self.game_object.rect.x += 10;
     }
 
     pub fn move_x_left(&mut self) {
-        self.game_object.x -= 10;
+        self.game_object.rect.x -= 10;
     }
 
     pub fn move_down(&mut self) {
-        self.game_object.y += 8 * PIXEL_SIZE;
+        self.game_object.rect.y += 8 * PIXEL_SIZE;
     }
 }

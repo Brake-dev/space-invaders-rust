@@ -7,8 +7,8 @@ pub struct UFO {
 
 impl UFO {
     pub fn new(spawn_times: u32) -> UFO {
-        let width = 16 * PIXEL_SIZE;
-        let height = 7 * PIXEL_SIZE;
+        let width = 16 * PIXEL_SIZE as u32;
+        let height = 7 * PIXEL_SIZE as u32;
 
         let mut x = CANVAS_LEFT_EDGE;
         let mut dir = String::from("right");
@@ -19,16 +19,22 @@ impl UFO {
         }
 
         UFO {
-            game_object: GameObject::new(x, height, width, height, String::from("ufo_texture")),
+            game_object: GameObject::new(
+                x,
+                height as i32,
+                width,
+                height,
+                String::from("ufo_texture"),
+            ),
             dir,
         }
     }
 
     pub fn move_x(&mut self) {
         if self.dir == "right" {
-            self.game_object.x += 10;
+            self.game_object.rect.x += 10;
         } else {
-            self.game_object.x -= 10;
+            self.game_object.rect.x -= 10;
         }
     }
 }

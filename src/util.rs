@@ -18,12 +18,7 @@ pub fn draw_texture<'a>(
             None => &missing_texture,
         },
         None,
-        Rect::new(
-            object.x as i32,
-            object.y as i32,
-            object.width,
-            object.height,
-        ),
+        object.rect,
     )
 }
 
@@ -35,20 +30,20 @@ pub fn draw_texture_nameless<'a>(
     canvas.copy(texture, None, *rect)
 }
 
-pub fn overlaps(a: &GameObject, b: &GameObject) -> bool {
-    let a_xmax = a.x + a.width;
-    let a_ymax = a.y + a.height;
+pub fn overlaps(a: &Rect, b: &Rect) -> bool {
+    let a_xmax = a.x + a.width() as i32;
+    let a_ymax = a.y + a.height() as i32;
 
-    let b_xmax = b.x + b.width;
-    let b_ymax = b.y + b.height;
+    let b_xmax = b.x + b.width() as i32;
+    let b_ymax = b.y + b.height() as i32;
 
     a_xmax > b.x && b_xmax > a.x && a_ymax > b.y && b_ymax > a.y
 }
 
-pub fn center_x(width: u32) -> i32 {
-    (CANVAS_WIDTH - width - (width / 2)) as i32
+pub fn center_x(width: i32) -> i32 {
+    CANVAS_WIDTH - width - (width / 2)
 }
 
-pub fn center_y(height: u32) -> i32 {
-    (CANVAS_HEIGHT - height - (height / 2)) as i32
+pub fn center_y(height: i32) -> i32 {
+    CANVAS_HEIGHT - height - (height / 2)
 }
