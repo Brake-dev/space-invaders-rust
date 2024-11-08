@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use sdl2::pixels::Color;
+use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
@@ -54,14 +55,13 @@ pub fn textures<'a>(
 
     let mut barrier_mask_texture = texture_creator
         .create_texture_target(
-            None,
+            PixelFormatEnum::ABGR8888,
             BARRIER_MASK[0].len() as u32,
             BARRIER_MASK.len() as u32,
         )
         .map_err(|e| e.to_string())?;
 
-    // barrier_mask_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
-    // barrier_mask_texture.set_alpha_mod(127);
+    barrier_mask_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
 
     let mut ufo_texture = texture_creator
         .create_texture_target(None, UFO[0].len() as u32, UFO.len() as u32)
@@ -365,6 +365,7 @@ pub fn textures<'a>(
     Ok((hash, missing_texture))
 }
 
+#[allow(dead_code)]
 pub fn get_collider_textures<'a>(
     canvas: &mut Canvas<Window>,
     texture_creator: &'a TextureCreator<WindowContext>,
