@@ -243,6 +243,17 @@ impl Game {
             .collect()
     }
 
+    pub fn set_all_barrier_colliders(&mut self, next_objects: Vec<Collider>) {
+        let mut flat_index = 0 as usize;
+
+        for row in &mut self.barrier_row {
+            for collider in &mut row.colliders {
+                *collider = next_objects[flat_index].clone();
+                flat_index += 1;
+            }
+        }
+    }
+
     pub fn toggle_state(&mut self) {
         self.state = match self.state {
             State::Paused => State::Playing,

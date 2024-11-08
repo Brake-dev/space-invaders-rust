@@ -8,8 +8,8 @@ use sdl2::video::{Window, WindowContext};
 use crate::barrier::Collider;
 use crate::game::PIXEL_SIZE;
 use crate::texture_templates::{
-    BARRIER, EXPLOSION, INVADER_1, INVADER_2, INVADER_3, INVADER_SHOT, MISSING_TEXTURE, PLAYER,
-    SHOT, UFO,
+    BARRIER, BARRIER_MASK, EXPLOSION, INVADER_1, INVADER_2, INVADER_3, INVADER_SHOT,
+    MISSING_TEXTURE, PLAYER, SHOT, UFO,
 };
 
 pub fn textures<'a>(
@@ -51,6 +51,17 @@ pub fn textures<'a>(
     let mut barrier_texture = texture_creator
         .create_texture_target(None, BARRIER[0].len() as u32, BARRIER.len() as u32)
         .map_err(|e| e.to_string())?;
+
+    let mut barrier_mask_texture = texture_creator
+        .create_texture_target(
+            None,
+            BARRIER_MASK[0].len() as u32,
+            BARRIER_MASK.len() as u32,
+        )
+        .map_err(|e| e.to_string())?;
+
+    // barrier_mask_texture.set_blend_mode(sdl2::render::BlendMode::Blend);
+    // barrier_mask_texture.set_alpha_mod(127);
 
     let mut ufo_texture = texture_creator
         .create_texture_target(None, UFO[0].len() as u32, UFO.len() as u32)
@@ -262,6 +273,32 @@ pub fn textures<'a>(
         .map_err(|e| e.to_string())?;
 
     canvas
+        .with_texture_canvas(&mut barrier_mask_texture, |texture_canvas| {
+            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.clear();
+
+            for (i, _) in BARRIER_MASK.iter().enumerate() {
+                for (j, val) in BARRIER_MASK[i].iter().enumerate() {
+                    if *val == 0 {
+                        texture_canvas.set_draw_color(Color::RGBA(0, 0, 0, 0));
+                    } else {
+                        texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+                    }
+
+                    texture_canvas
+                        .fill_rect(Rect::new(
+                            j as i32,
+                            i as i32,
+                            PIXEL_SIZE as u32,
+                            PIXEL_SIZE as u32,
+                        ))
+                        .expect("could not draw rect");
+                }
+            }
+        })
+        .map_err(|e| e.to_string())?;
+
+    canvas
         .with_texture_canvas(&mut ufo_texture, |texture_canvas| {
             texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
             texture_canvas.clear();
@@ -322,6 +359,7 @@ pub fn textures<'a>(
     hash.insert(String::from("explosion_texture"), explosion_texture);
     hash.insert(String::from("invader_shot_texture"), invader_shot_texture);
     hash.insert(String::from("barrier_texture"), barrier_texture);
+    hash.insert(String::from("barrier_mask_texture"), barrier_mask_texture);
     hash.insert(String::from("ufo_texture"), ufo_texture);
 
     Ok((hash, missing_texture))

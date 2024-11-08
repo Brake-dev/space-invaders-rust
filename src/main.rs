@@ -4,6 +4,7 @@ use sdl2::event::Event;
 use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
 use std::collections::HashSet;
 
@@ -21,7 +22,7 @@ use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, FPS, PIX
 use crate::player::Player;
 use crate::textures::textures;
 use crate::ui::{create_ui, UI};
-use crate::util::{draw_texture, overlaps};
+use crate::util::{draw_texture, draw_texture_nameless, overlaps};
 
 pub struct RetryEvent;
 
@@ -57,8 +58,13 @@ fn main() -> Result<(), String> {
     let (modal_hash, arrow_texture, ui_texture_hash, ui_targets_hash, default_target) =
         create_ui(&mut canvas, &texture_creator)?;
 
-    let colliders = &game.get_all_barrier_colliders();
-    // let collider_textures = get_collider_textures(&mut canvas, &texture_creator, colliders)?;
+    let explosion_game_object = GameObject::new(
+        player.game_object.rect.x,
+        player.game_object.rect.y,
+        12 * PIXEL_SIZE as u32,
+        10 * PIXEL_SIZE as u32,
+        String::from("explosion_texture"),
+    );
 
     let mut ui = UI::new(
         match ui_targets_hash.get("retry") {
@@ -187,11 +193,25 @@ fn main() -> Result<(), String> {
                     &missing_texture,
                     &barrier.game_object,
                 )?;
-            }
 
-            // for (i, collider) in colliders.iter().enumerate() {
-            //     draw_texture_nameless(&mut canvas, &collider_textures[i], &collider.rect)?;
-            // }
+                for collider in &barrier.colliders {
+                    if collider.is_destroyed {
+                        draw_texture_nameless(
+                            &mut canvas,
+                            match textures.get("barrier_mask_texture") {
+                                Some(tex) => tex,
+                                None => &missing_texture,
+                            },
+                            &Rect::new(
+                                collider.rect.x,
+                                collider.rect.y,
+                                5 * PIXEL_SIZE as u32,
+                                5 * PIXEL_SIZE as u32,
+                            ),
+                        )?;
+                    }
+                }
+            }
 
             if !player.game_object.is_destroyed {
                 draw_texture(
@@ -210,13 +230,7 @@ fn main() -> Result<(), String> {
                     &mut canvas,
                     &textures,
                     &missing_texture,
-                    &GameObject::new(
-                        player.game_object.rect.x,
-                        player.game_object.rect.y,
-                        12 * PIXEL_SIZE as u32,
-                        10 * PIXEL_SIZE as u32,
-                        String::from("explosion_texture"),
-                    ),
+                    &explosion_game_object,
                 )?;
             }
 
@@ -249,6 +263,7 @@ fn main() -> Result<(), String> {
             let mut next_bullets = player.bullets.clone();
             let mut next_invaders = game.get_all_invader_objects();
             let mut next_invader_shots = game.invader_shots.clone();
+            let mut next_colliders = game.get_all_barrier_colliders();
 
             for bullet in &mut next_bullets {
                 for invader in &mut next_invaders {
@@ -258,6 +273,13 @@ fn main() -> Result<(), String> {
 
                     if overlaps(&invader.rect, &bullet.rect) {
                         invader.is_destroyed = true;
+                        bullet.is_destroyed = true;
+                    }
+                }
+
+                for collider in &mut next_colliders {
+                    if !collider.is_destroyed && overlaps(&collider.rect, &bullet.rect) {
+                        collider.is_destroyed = true;
                         bullet.is_destroyed = true;
                     }
                 }
@@ -279,11 +301,19 @@ fn main() -> Result<(), String> {
                         bullet.is_destroyed = true;
                     }
                 }
+
+                for collider in &mut next_colliders {
+                    if !collider.is_destroyed && overlaps(&collider.rect, &invader_shot.rect) {
+                        collider.is_destroyed = true;
+                        invader_shot.is_destroyed = true;
+                    }
+                }
             }
 
             player.bullets = next_bullets;
             game.set_all_invader_objects(next_invaders);
             game.invader_shots = next_invader_shots;
+            game.set_all_barrier_colliders(next_colliders);
 
             game.update();
             player.update();
