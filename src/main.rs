@@ -6,7 +6,6 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
-use std::collections::HashSet;
 
 mod barrier;
 mod game;
@@ -82,9 +81,6 @@ fn main() -> Result<(), String> {
 
     event.register_custom_event::<RetryEvent>()?;
 
-    let mut prev_keys = HashSet::new();
-
-    let mut shot_timer = 1;
     let mut player_explosion_timer = 0;
     let mut game_over_timer = 0;
     let mut ufo_timer = game.get_next_ufo_time();
@@ -107,9 +103,6 @@ fn main() -> Result<(), String> {
                         game = Game::new();
                         player = Player::new();
 
-                        prev_keys = HashSet::new();
-
-                        shot_timer = 1;
                         player_explosion_timer = 0;
                         game_over_timer = 0;
                         ufo_timer = game.get_next_ufo_time();
@@ -124,44 +117,6 @@ fn main() -> Result<(), String> {
             .pressed_scancodes()
             .filter_map(Keycode::from_scancode)
             .collect();
-
-        let new_keys = &keys - &prev_keys;
-        let old_keys = &prev_keys - &keys;
-
-        if !new_keys.is_empty() || !old_keys.is_empty() {
-            if new_keys.contains(&Keycode::Left) {
-                player.set_moving_left(true);
-            } else if old_keys.contains(&Keycode::Left) {
-                player.set_moving_left(false);
-            }
-
-            if new_keys.contains(&Keycode::Right) {
-                player.set_moving_right(true);
-            } else if old_keys.contains(&Keycode::Right) {
-                player.set_moving_right(false);
-            }
-
-            if new_keys.contains(&Keycode::Space) && shot_timer == 0 {
-                player.shoot();
-                shot_timer = 20;
-            }
-
-            if game.state == State::Paused {
-                if new_keys.contains(&Keycode::Up) || new_keys.contains(&Keycode::Down) {
-                    ui.update_cursor();
-                }
-
-                if new_keys.contains(&Keycode::Return) || new_keys.contains(&Keycode::Space) {
-                    ui.select(&event);
-                }
-            }
-        }
-
-        prev_keys = keys;
-
-        if shot_timer > 0 {
-            shot_timer -= 1;
-        }
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
@@ -316,7 +271,8 @@ fn main() -> Result<(), String> {
             game.set_all_barrier_colliders(next_colliders);
 
             game.update();
-            player.update();
+            player.update(&keys);
+            ui.update(&keys, &event, &game.state);
         } else {
             canvas.set_draw_color(Color::RGB(0, 0, 0));
             canvas.clear();

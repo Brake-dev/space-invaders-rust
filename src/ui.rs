@@ -1,21 +1,23 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
 use sdl2::video::{Window, WindowContext};
 use sdl2::EventSubsystem;
 
-use crate::game::{CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::game::{State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
 use crate::RetryEvent;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct UI {
     pub targets: [Rect; 2],
     pub cursor_pos: usize,
+    prev_keys: HashSet<Keycode>,
 }
 
 impl UI {
@@ -23,6 +25,7 @@ impl UI {
         UI {
             targets: [retry_target, quit_target],
             cursor_pos: 0,
+            prev_keys: HashSet::new(),
         }
     }
 
@@ -59,6 +62,25 @@ impl UI {
                 Err(_) => panic!("Error handling quit event"),
             }
         }
+    }
+
+    pub fn update(&mut self, keys: &HashSet<Keycode>, event: &EventSubsystem, game_state: &State) {
+        let new_keys = keys - &self.prev_keys;
+        let old_keys = &self.prev_keys - keys;
+
+        if !new_keys.is_empty() || !old_keys.is_empty() {
+            if game_state == &State::Paused {
+                if new_keys.contains(&Keycode::Up) || new_keys.contains(&Keycode::Down) {
+                    self.update_cursor();
+                }
+
+                if new_keys.contains(&Keycode::Return) || new_keys.contains(&Keycode::Space) {
+                    self.select(&event);
+                }
+            }
+        }
+
+        self.prev_keys = keys.clone();
     }
 }
 
