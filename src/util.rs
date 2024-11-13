@@ -47,3 +47,11 @@ pub fn center_x(width: i32) -> i32 {
 pub fn center_y(height: i32) -> i32 {
     CANVAS_HEIGHT - height - (height / 2)
 }
+
+pub fn decrease_until_zero(value: i32, modifier: i32, min: i32) -> i32 {
+    if value - modifier > 0 {
+        return value - modifier;
+    } else {
+        return min;
+    }
+}

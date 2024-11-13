@@ -24,6 +24,7 @@ use crate::ui::{create_ui, UI};
 use crate::util::{draw_texture, draw_texture_nameless, overlaps};
 
 pub struct RetryEvent;
+pub struct ContinueEvent;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -80,6 +81,7 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     event.register_custom_event::<RetryEvent>()?;
+    event.register_custom_event::<ContinueEvent>()?;
 
     let mut player_explosion_timer = 0;
     let mut game_over_timer = 0;
@@ -88,16 +90,18 @@ fn main() -> Result<(), String> {
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
+                Event::Quit { .. } => break 'running,
+                Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => break 'running,
+                } => game.set_paused(),
                 _ => {}
             }
 
             if event.is_user_event() {
                 let retry = event.as_user_event_type::<RetryEvent>();
+                let continue_event = event.as_user_event_type::<ContinueEvent>();
+
                 match retry {
                     Some(_) => {
                         game = Game::new();
@@ -107,6 +111,11 @@ fn main() -> Result<(), String> {
                         game_over_timer = 0;
                         ufo_timer = game.get_next_ufo_time();
                     }
+                    None => (),
+                }
+
+                match continue_event {
+                    Some(_) => game.set_playing(),
                     None => (),
                 }
             }
@@ -123,7 +132,7 @@ fn main() -> Result<(), String> {
 
         fps_manager.delay();
 
-        if game.state != State::Paused {
+        if game.state == State::Playing {
             for invader in &game.invaders {
                 draw_texture(
                     &mut canvas,
@@ -206,7 +215,7 @@ fn main() -> Result<(), String> {
             }
 
             if game_over_timer > 1 {
-                game.toggle_state();
+                game.set_game_over();
             }
 
             for bullet in &player.bullets {
@@ -272,7 +281,6 @@ fn main() -> Result<(), String> {
 
             game.update();
             player.update(&keys);
-            ui.update(&keys, &event, &game.state);
         } else {
             canvas.set_draw_color(Color::RGB(0, 0, 0));
             canvas.clear();
@@ -284,6 +292,14 @@ fn main() -> Result<(), String> {
             canvas.copy(&arrow_texture, None, ui.get_cursor_target())?;
 
             for ui_el in &ui_texture_hash {
+                if game.state == State::Paused
+                    && (*ui_el.0 == String::from("game_over") || *ui_el.0 == String::from("retry"))
+                {
+                    continue;
+                } else if game.state == State::GameOver && *ui_el.0 == String::from("continue") {
+                    continue;
+                }
+
                 canvas.copy(
                     ui_el.1,
                     None,
@@ -296,6 +312,8 @@ fn main() -> Result<(), String> {
 
             canvas.present();
         }
+
+        ui.update(&keys, &event, &game.state);
     }
 
     Ok(())

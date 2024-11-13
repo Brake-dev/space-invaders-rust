@@ -7,6 +7,7 @@ use rand::{self, thread_rng, Rng};
 use crate::barrier::{Barrier, Collider};
 use crate::invader::Invader;
 use crate::ufo::UFO;
+use crate::util::decrease_until_zero;
 
 pub const FPS: u32 = 60;
 
@@ -30,7 +31,8 @@ pub const HEIGHT_DIV_4: i32 = CANVAS_HEIGHT / 4;
 const INVADER_SHOT_DELAY: u32 = 10;
 const EXPLOSION_TIMER: u32 = 1;
 
-const INVADER_TICK: u32 = 50;
+const TICK_INCREASE: i32 = 12;
+const SPEED_INCREASE_LEN: i32 = 15;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
@@ -57,19 +59,22 @@ pub struct Game {
     invader_shot_timer: u32,
     explosion_timer: u32,
     pub state: State,
-    timer: u32,
-    speed: u32,
+    timer: i32,
+    speed: i32,
     move_rows_down: VecDeque<u32>,
     pub ufo: UFO,
     spawn_ufo: bool,
     pub ufo_active: bool,
     ufo_spawn_times: u32,
+    invader_tick: i32,
+    speed_increase_threashold: i32,
 }
 
 #[derive(PartialEq)]
 pub enum State {
     Playing,
     Paused,
+    GameOver,
 }
 
 impl Game {
@@ -185,6 +190,8 @@ impl Game {
             spawn_ufo: false,
             ufo_active: false,
             ufo_spawn_times: 0,
+            invader_tick: 50,
+            speed_increase_threashold: 50 - SPEED_INCREASE_LEN,
         }
     }
 
@@ -224,16 +231,20 @@ impl Game {
             max = invader_indices.len();
         }
 
-        let num = thread_rng().gen_range(1..max);
+        if max > 1 {
+            let num = thread_rng().gen_range(1..max);
 
-        let shooters: Vec<i32> = (0..num)
-            .map(|_| {
-                let index = thread_rng().gen_range(0..invader_indices.len());
-                invader_indices[index]
-            })
-            .collect();
+            let shooters: Vec<i32> = (0..num)
+                .map(|_| {
+                    let index = thread_rng().gen_range(0..invader_indices.len());
+                    invader_indices[index]
+                })
+                .collect();
 
-        shooters
+            return shooters;
+        }
+
+        vec![]
     }
 
     pub fn get_all_barrier_colliders(&self) -> Vec<Collider> {
@@ -254,11 +265,18 @@ impl Game {
         }
     }
 
-    pub fn toggle_state(&mut self) {
-        self.state = match self.state {
-            State::Paused => State::Playing,
-            State::Playing => State::Paused,
+    pub fn set_playing(&mut self) {
+        self.state = State::Playing;
+    }
+
+    pub fn set_paused(&mut self) {
+        if self.state != State::GameOver {
+            self.state = State::Paused;
         }
+    }
+
+    pub fn set_game_over(&mut self) {
+        self.state = State::GameOver;
     }
 
     pub fn get_next_ufo_time(&self) -> u32 {
@@ -297,6 +315,13 @@ impl Game {
         }
 
         self.invaders.retain(|r| !r.game_object.is_destroyed);
+
+        if self.invaders.len() as i32 <= self.speed_increase_threashold {
+            self.invader_tick = decrease_until_zero(self.invader_tick, TICK_INCREASE, 0);
+
+            self.speed_increase_threashold =
+                decrease_until_zero(self.speed_increase_threashold, SPEED_INCREASE_LEN, 1);
+        }
 
         if self.spawn_ufo {
             self.toggle_spawn_ufo();
@@ -350,16 +375,16 @@ impl Game {
 
         self.timer += 1 * self.speed;
 
-        if self.timer >= INVADER_TICK {
+        if self.timer >= self.invader_tick {
             self.timer = 0;
 
             let mut move_down = false;
             if self.move_rows_down.len() == 0 {
                 for invader in &self.invaders {
-                    if invader.game_object.rect.x == CANVAS_RIGHT_EDGE && invader.dir == "right" {
+                    if invader.game_object.rect.x >= CANVAS_RIGHT_EDGE && invader.dir == "right" {
                         move_down = true;
                         break;
-                    } else if invader.game_object.rect.x == CANVAS_LEFT_EDGE
+                    } else if invader.game_object.rect.x <= CANVAS_LEFT_EDGE
                         && invader.dir == "left"
                     {
                         move_down = true;

@@ -11,7 +11,7 @@ use sdl2::EventSubsystem;
 use crate::game::{State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
-use crate::RetryEvent;
+use crate::{ContinueEvent, RetryEvent};
 
 #[derive(Clone)]
 pub struct UI {
@@ -41,19 +41,27 @@ impl UI {
         let target = self.targets[self.cursor_pos];
 
         Rect::new(
-            target.left() - 200,
+            target.left() - 300,
             target.center().y() - (target.height() / 2) as i32,
             ARROW[0].len() as u32 * PIXEL_SIZE as u32 * 2,
             ARROW.len() as u32 * PIXEL_SIZE as u32 * 2,
         )
     }
 
-    pub fn select(&self, event: &EventSubsystem) {
+    pub fn select(&self, event: &EventSubsystem, game_state: &State) {
         if self.cursor_pos == 0 {
-            let result = event.push_custom_event(RetryEvent);
-            match result {
-                Ok(_) => (),
-                Err(_) => panic!("Error handling retry event"),
+            if game_state == &State::GameOver {
+                let result = event.push_custom_event(RetryEvent);
+                match result {
+                    Ok(_) => (),
+                    Err(_) => panic!("Error handling retry event"),
+                }
+            } else if game_state == &State::Paused {
+                let result = event.push_custom_event(ContinueEvent);
+                match result {
+                    Ok(_) => (),
+                    Err(_) => panic!("Error handling retry event"),
+                }
             }
         } else {
             let result = event.push_event(Event::Quit { timestamp: (0) });
@@ -69,13 +77,13 @@ impl UI {
         let old_keys = &self.prev_keys - keys;
 
         if !new_keys.is_empty() || !old_keys.is_empty() {
-            if game_state == &State::Paused {
+            if game_state != &State::Playing {
                 if new_keys.contains(&Keycode::Up) || new_keys.contains(&Keycode::Down) {
                     self.update_cursor();
                 }
 
                 if new_keys.contains(&Keycode::Return) || new_keys.contains(&Keycode::Space) {
-                    self.select(&event);
+                    self.select(&event, &game_state);
                 }
             }
         }
@@ -112,6 +120,11 @@ pub fn create_ui<'a>(
         .blended(Color::RGB(255, 255, 255))
         .map_err(|e| e.to_string())?;
 
+    let continue_surface = font
+        .render("Continue")
+        .blended(Color::RGB(255, 255, 255))
+        .map_err(|e| e.to_string())?;
+
     let retry_surface = font
         .render("Retry")
         .blended(Color::RGB(255, 255, 255))
@@ -126,6 +139,10 @@ pub fn create_ui<'a>(
         .create_texture_from_surface(&game_over_surface)
         .map_err(|e| e.to_string())?;
 
+    let continue_texture = texture_creator
+        .create_texture_from_surface(&continue_surface)
+        .map_err(|e| e.to_string())?;
+
     let retry_texture = texture_creator
         .create_texture_from_surface(&retry_surface)
         .map_err(|e| e.to_string())?;
@@ -135,6 +152,7 @@ pub fn create_ui<'a>(
         .map_err(|e| e.to_string())?;
 
     let game_over_query = game_over_texture.query();
+    let continue_query = continue_texture.query();
     let retry_query = retry_texture.query();
     let quit_query = quit_texture.query();
 
@@ -143,6 +161,13 @@ pub fn create_ui<'a>(
         modal_target.top(),
         game_over_query.width,
         game_over_query.height,
+    );
+
+    let continue_target = Rect::new(
+        modal_target.center().x() - (continue_query.width / 2) as i32,
+        modal_target.top() + 200,
+        continue_query.width,
+        continue_query.height,
     );
 
     let retry_target = Rect::new(
@@ -218,11 +243,13 @@ pub fn create_ui<'a>(
 
     let mut ui_texture_hash: HashMap<String, Texture> = HashMap::new();
     ui_texture_hash.insert(String::from("game_over"), game_over_texture);
+    ui_texture_hash.insert(String::from("continue"), continue_texture);
     ui_texture_hash.insert(String::from("retry"), retry_texture);
     ui_texture_hash.insert(String::from("quit"), quit_texture);
 
     let mut ui_target_hash: HashMap<String, Rect> = HashMap::new();
     ui_target_hash.insert(String::from("game_over"), game_over_target);
+    ui_target_hash.insert(String::from("continue"), continue_target);
     ui_target_hash.insert(String::from("retry"), retry_target);
     ui_target_hash.insert(String::from("quit"), quit_target);
 
