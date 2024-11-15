@@ -50,7 +50,7 @@ impl UI {
 
     pub fn select(&self, event: &EventSubsystem, game_state: &State) {
         if self.cursor_pos == 0 {
-            if game_state == &State::GameOver {
+            if game_state == &State::GameOver || game_state == &State::Win {
                 let result = event.push_custom_event(RetryEvent);
                 match result {
                     Ok(_) => (),
@@ -90,6 +90,39 @@ impl UI {
 
         self.prev_keys = keys.clone();
     }
+
+    pub fn get_ui_targets_base_on_state<'a>(
+        &self,
+        ui_targets_hash: &HashMap<String, Rect>,
+        game_state: &State,
+    ) -> HashMap<String, Rect> {
+        let mut keys = [String::from(""), String::from(""), String::from("")];
+
+        if game_state == &State::GameOver {
+            keys = [
+                String::from("game over"),
+                String::from("retry"),
+                String::from("quit"),
+            ];
+        } else if game_state == &State::Paused {
+            keys = [
+                String::from(""),
+                String::from("continue"),
+                String::from("quit"),
+            ];
+        } else if game_state == &State::Win {
+            keys = [
+                String::from("victory"),
+                String::from("retry"),
+                String::from("quit"),
+            ];
+        }
+
+        let mut ui_targets = ui_targets_hash.clone();
+        ui_targets.retain(|k, _| keys.contains(k));
+
+        return ui_targets;
+    }
 }
 
 pub fn create_ui<'a>(
@@ -120,6 +153,11 @@ pub fn create_ui<'a>(
         .blended(Color::RGB(255, 255, 255))
         .map_err(|e| e.to_string())?;
 
+    let victory_surface = font
+        .render("Victory!")
+        .blended(Color::RGB(255, 255, 255))
+        .map_err(|e| e.to_string())?;
+
     let continue_surface = font
         .render("Continue")
         .blended(Color::RGB(255, 255, 255))
@@ -139,6 +177,10 @@ pub fn create_ui<'a>(
         .create_texture_from_surface(&game_over_surface)
         .map_err(|e| e.to_string())?;
 
+    let victory_texture = texture_creator
+        .create_texture_from_surface(&victory_surface)
+        .map_err(|e| e.to_string())?;
+
     let continue_texture = texture_creator
         .create_texture_from_surface(&continue_surface)
         .map_err(|e| e.to_string())?;
@@ -152,6 +194,7 @@ pub fn create_ui<'a>(
         .map_err(|e| e.to_string())?;
 
     let game_over_query = game_over_texture.query();
+    let victory_query = victory_texture.query();
     let continue_query = continue_texture.query();
     let retry_query = retry_texture.query();
     let quit_query = quit_texture.query();
@@ -161,6 +204,13 @@ pub fn create_ui<'a>(
         modal_target.top(),
         game_over_query.width,
         game_over_query.height,
+    );
+
+    let victory_target = Rect::new(
+        modal_target.center().x() - (victory_query.width / 2) as i32,
+        modal_target.top(),
+        victory_query.width,
+        victory_query.height,
     );
 
     let continue_target = Rect::new(
@@ -243,12 +293,14 @@ pub fn create_ui<'a>(
 
     let mut ui_texture_hash: HashMap<String, Texture> = HashMap::new();
     ui_texture_hash.insert(String::from("game_over"), game_over_texture);
+    ui_texture_hash.insert(String::from("victory"), victory_texture);
     ui_texture_hash.insert(String::from("continue"), continue_texture);
     ui_texture_hash.insert(String::from("retry"), retry_texture);
     ui_texture_hash.insert(String::from("quit"), quit_texture);
 
     let mut ui_target_hash: HashMap<String, Rect> = HashMap::new();
     ui_target_hash.insert(String::from("game_over"), game_over_target);
+    ui_target_hash.insert(String::from("victory"), victory_target);
     ui_target_hash.insert(String::from("continue"), continue_target);
     ui_target_hash.insert(String::from("retry"), retry_target);
     ui_target_hash.insert(String::from("quit"), quit_target);

@@ -54,7 +54,7 @@ fn main() -> Result<(), String> {
     let mut player = Player::new();
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
-    let (textures, missing_texture) = textures(&mut canvas, &texture_creator)?;
+    let (textures, missing_texture, empty_texture) = textures(&mut canvas, &texture_creator)?;
     let (modal_hash, arrow_texture, ui_texture_hash, ui_targets_hash, default_target) =
         create_ui(&mut canvas, &texture_creator)?;
 
@@ -292,22 +292,16 @@ fn main() -> Result<(), String> {
 
             canvas.copy(&arrow_texture, None, ui.get_cursor_target())?;
 
-            for ui_el in &ui_texture_hash {
-                if game.state == State::Paused
-                    && (*ui_el.0 == String::from("game_over") || *ui_el.0 == String::from("retry"))
-                {
-                    continue;
-                } else if game.state == State::GameOver && *ui_el.0 == String::from("continue") {
-                    continue;
-                }
+            let ui_targets = ui.get_ui_targets_base_on_state(&ui_targets_hash, &game.state);
 
+            for ui_el in ui_targets {
                 canvas.copy(
-                    ui_el.1,
-                    None,
-                    *match ui_targets_hash.get(ui_el.0) {
-                        Some(target) => target,
-                        None => &default_target,
+                    match ui_texture_hash.get(&ui_el.0) {
+                        Some(texture) => texture,
+                        None => &empty_texture,
                     },
+                    None,
+                    ui_el.1,
                 )?;
             }
 

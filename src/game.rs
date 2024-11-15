@@ -76,6 +76,7 @@ pub enum State {
     Playing,
     Paused,
     GameOver,
+    Win,
 }
 
 impl Game {

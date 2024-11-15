@@ -16,7 +16,7 @@ use crate::texture_templates::{
 pub fn textures<'a>(
     canvas: &mut Canvas<Window>,
     texture_creator: &'a TextureCreator<WindowContext>,
-) -> Result<(HashMap<String, Texture<'a>>, Texture<'a>), String> {
+) -> Result<(HashMap<String, Texture<'a>>, Texture<'a>, Texture<'a>), String> {
     let mut invader_texture1 = texture_creator
         .create_texture_target(None, INVADER_1[0].len() as u32, INVADER_1.len() as u32)
         .map_err(|e| e.to_string())?;
@@ -73,6 +73,10 @@ pub fn textures<'a>(
             MISSING_TEXTURE.len() as u32,
             MISSING_TEXTURE.len() as u32,
         )
+        .map_err(|e| e.to_string())?;
+
+    let mut empty_texture = texture_creator
+        .create_texture_target(None, 1, 1)
         .map_err(|e| e.to_string())?;
 
     canvas
@@ -350,6 +354,17 @@ pub fn textures<'a>(
         })
         .map_err(|e| e.to_string())?;
 
+    canvas
+        .with_texture_canvas(&mut empty_texture, |texture_canvas| {
+            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.clear();
+
+            texture_canvas
+                .fill_rect(Rect::new(0, 0, 0, 0))
+                .expect("could not draw rect");
+        })
+        .map_err(|e| e.to_string())?;
+
     let mut hash: HashMap<String, Texture> = HashMap::new();
     hash.insert(String::from("invader_texture1"), invader_texture1);
     hash.insert(String::from("invader_texture2"), invader_texture2);
@@ -362,7 +377,7 @@ pub fn textures<'a>(
     hash.insert(String::from("barrier_mask_texture"), barrier_mask_texture);
     hash.insert(String::from("ufo_texture"), ufo_texture);
 
-    Ok((hash, missing_texture))
+    Ok((hash, missing_texture, empty_texture))
 }
 
 #[allow(dead_code)]
