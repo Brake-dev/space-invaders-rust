@@ -29,7 +29,7 @@ const WIDTH_DIV_320: i32 = CANVAS_WIDTH / 320;
 pub const HEIGHT_DIV_4: i32 = CANVAS_HEIGHT / 4;
 
 const INVADER_SHOT_DELAY: u32 = 10;
-const EXPLOSION_TIMER: u32 = 1;
+const EXPLOSION_TIMER: i32 = 2;
 
 const DEFAULT_TICK: i32 = 50;
 const TICK_INCREASE: i32 = 12;
@@ -57,9 +57,8 @@ pub struct Game {
     pub barrier_row: Vec<Barrier>,
     pub invader_shots: Vec<GameObject>,
     loaded_shot: Vec<(i32, i32)>,
-    pub explosions: Vec<GameObject>,
+    pub explosions: Vec<(GameObject, i32)>,
     invader_shot_timer: u32,
-    explosion_timer: u32,
     pub state: State,
     timer: i32,
     speed: i32,
@@ -184,7 +183,6 @@ impl Game {
             loaded_shot: vec![],
             explosions: vec![],
             invader_shot_timer: 0,
-            explosion_timer: EXPLOSION_TIMER,
             state: State::Playing,
             timer: 0,
             speed: 1,
@@ -297,22 +295,17 @@ impl Game {
     }
 
     pub fn update(&mut self, time: &i32) {
-        if self.explosion_timer > 0 {
-            self.explosion_timer -= 1;
-        } else {
-            self.explosions = vec![];
-        }
-
         for invader in &self.invaders {
             if invader.game_object.is_destroyed {
-                self.explosion_timer = EXPLOSION_TIMER;
-
-                self.explosions.push(GameObject::new(
-                    invader.game_object.rect.x,
-                    invader.game_object.rect.y,
-                    12 * PIXEL_SIZE as u32,
-                    10 * PIXEL_SIZE as u32,
-                    String::from("explosion_texture"),
+                self.explosions.push((
+                    GameObject::new(
+                        invader.game_object.rect.x,
+                        invader.game_object.rect.y,
+                        12 * PIXEL_SIZE as u32,
+                        10 * PIXEL_SIZE as u32,
+                        String::from("explosion_texture"),
+                    ),
+                    time + EXPLOSION_TIMER,
                 ));
             }
         }
@@ -343,31 +336,36 @@ impl Game {
         }
 
         if self.ufo.game_object.is_destroyed {
-            self.explosion_timer = EXPLOSION_TIMER;
             self.ufo_active = false;
 
-            self.explosions.push(GameObject::new(
-                self.ufo.game_object.rect.x,
-                self.ufo.game_object.rect.y,
-                12 * PIXEL_SIZE as u32,
-                10 * PIXEL_SIZE as u32,
-                String::from("explosion_texture"),
+            self.explosions.push((
+                GameObject::new(
+                    self.ufo.game_object.rect.x,
+                    self.ufo.game_object.rect.y,
+                    12 * PIXEL_SIZE as u32,
+                    10 * PIXEL_SIZE as u32,
+                    String::from("explosion_texture"),
+                ),
+                time + EXPLOSION_TIMER,
             ));
         }
 
         for invader_shot in &self.invader_shots {
             if invader_shot.is_destroyed {
-                self.explosion_timer = EXPLOSION_TIMER;
-
-                self.explosions.push(GameObject::new(
-                    invader_shot.rect.x,
-                    invader_shot.rect.y,
-                    12 * PIXEL_SIZE as u32,
-                    10 * PIXEL_SIZE as u32,
-                    String::from("explosion_texture"),
+                self.explosions.push((
+                    GameObject::new(
+                        invader_shot.rect.x,
+                        invader_shot.rect.y,
+                        12 * PIXEL_SIZE as u32,
+                        10 * PIXEL_SIZE as u32,
+                        String::from("explosion_texture"),
+                    ),
+                    time + EXPLOSION_TIMER,
                 ));
             }
         }
+
+        self.explosions.retain(|e| e.1 > *time);
 
         self.invader_shots
             .retain(|s| s.rect.y > 10 && !s.is_destroyed);
@@ -443,17 +441,20 @@ impl Game {
 
             for shot in &self.loaded_shot {
                 if shot.1 <= *time {
-                    let invader = &self.invaders[shot.0 as usize];
+                    if self.invaders.len() > shot.0 as usize {
+                        let invader = &self.invaders[shot.0 as usize];
 
-                    if !invader.game_object.is_destroyed {
-                        self.invader_shots.push(GameObject::new(
-                            invader.game_object.rect.x
-                                + (invader.game_object.rect.width() / 2) as i32,
-                            invader.game_object.rect.y + invader.game_object.rect.height() as i32,
-                            3 * PIXEL_SIZE as u32,
-                            7 * PIXEL_SIZE as u32,
-                            String::from("invader_shot_texture"),
-                        ));
+                        if !invader.game_object.is_destroyed {
+                            self.invader_shots.push(GameObject::new(
+                                invader.game_object.rect.x
+                                    + (invader.game_object.rect.width() / 2) as i32,
+                                invader.game_object.rect.y
+                                    + invader.game_object.rect.height() as i32,
+                                3 * PIXEL_SIZE as u32,
+                                7 * PIXEL_SIZE as u32,
+                                String::from("invader_shot_texture"),
+                            ));
+                        }
                     }
                 }
             }

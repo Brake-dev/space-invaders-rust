@@ -148,7 +148,7 @@ fn main() -> Result<(), String> {
             }
 
             for explosion in &game.explosions {
-                draw_texture(&mut canvas, &textures, &missing_texture, &explosion)?;
+                draw_texture(&mut canvas, &textures, &missing_texture, &explosion.0)?;
             }
 
             for barrier in &game.barrier_row {
