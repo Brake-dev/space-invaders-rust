@@ -335,7 +335,7 @@ impl Game {
             self.ufo.move_x();
         }
 
-        if self.ufo.game_object.is_destroyed {
+        if self.ufo.game_object.is_destroyed && self.ufo_active == true {
             self.ufo_active = false;
 
             self.explosions.push((
