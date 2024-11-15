@@ -83,6 +83,7 @@ fn main() -> Result<(), String> {
     event.register_custom_event::<RetryEvent>()?;
     event.register_custom_event::<ContinueEvent>()?;
 
+    let mut time = 0;
     let mut player_explosion_timer = 0;
     let mut game_over_timer = 0;
     let mut ufo_timer = game.get_next_ufo_time();
@@ -279,7 +280,7 @@ fn main() -> Result<(), String> {
             game.invader_shots = next_invader_shots;
             game.set_all_barrier_colliders(next_colliders);
 
-            game.update();
+            game.update(&time);
             player.update(&keys);
         } else {
             canvas.set_draw_color(Color::RGB(0, 0, 0));
@@ -314,6 +315,8 @@ fn main() -> Result<(), String> {
         }
 
         ui.update(&keys, &event, &game.state);
+
+        time += 1;
     }
 
     Ok(())

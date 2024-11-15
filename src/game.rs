@@ -31,6 +31,7 @@ pub const HEIGHT_DIV_4: i32 = CANVAS_HEIGHT / 4;
 const INVADER_SHOT_DELAY: u32 = 10;
 const EXPLOSION_TIMER: u32 = 1;
 
+const DEFAULT_TICK: i32 = 50;
 const TICK_INCREASE: i32 = 12;
 const SPEED_INCREASE_LEN: i32 = 15;
 
@@ -55,6 +56,7 @@ pub struct Game {
     pub invaders: Vec<Invader>,
     pub barrier_row: Vec<Barrier>,
     pub invader_shots: Vec<GameObject>,
+    loaded_shot: Vec<(i32, i32)>,
     pub explosions: Vec<GameObject>,
     invader_shot_timer: u32,
     explosion_timer: u32,
@@ -179,6 +181,7 @@ impl Game {
             invaders,
             barrier_row,
             invader_shots: vec![],
+            loaded_shot: vec![],
             explosions: vec![],
             invader_shot_timer: 0,
             explosion_timer: EXPLOSION_TIMER,
@@ -190,8 +193,8 @@ impl Game {
             spawn_ufo: false,
             ufo_active: false,
             ufo_spawn_times: 0,
-            invader_tick: 50,
-            speed_increase_threashold: 50 - SPEED_INCREASE_LEN,
+            invader_tick: DEFAULT_TICK,
+            speed_increase_threashold: DEFAULT_TICK - SPEED_INCREASE_LEN,
         }
     }
 
@@ -293,7 +296,7 @@ impl Game {
         self.spawn_ufo = !self.spawn_ufo;
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, time: &i32) {
         if self.explosion_timer > 0 {
             self.explosion_timer -= 1;
         } else {
@@ -430,20 +433,32 @@ impl Game {
             if self.invader_shot_timer >= INVADER_SHOT_DELAY {
                 let new_shots = self.get_invader_shooters();
 
-                for shot in new_shots {
-                    let invader = &self.invaders[shot as usize];
-
-                    self.invader_shots.push(GameObject::new(
-                        invader.game_object.rect.x + (invader.game_object.rect.width() / 2) as i32,
-                        invader.game_object.rect.y + invader.game_object.rect.height() as i32,
-                        3 * PIXEL_SIZE as u32,
-                        7 * PIXEL_SIZE as u32,
-                        String::from("invader_shot_texture"),
-                    ));
+                for (i, shot) in new_shots.iter().enumerate() {
+                    self.loaded_shot
+                        .push((*shot, time + i as i32 * self.invader_tick));
                 }
 
                 self.invader_shot_timer = 0;
             }
+
+            for shot in &self.loaded_shot {
+                if shot.1 <= *time {
+                    let invader = &self.invaders[shot.0 as usize];
+
+                    if !invader.game_object.is_destroyed {
+                        self.invader_shots.push(GameObject::new(
+                            invader.game_object.rect.x
+                                + (invader.game_object.rect.width() / 2) as i32,
+                            invader.game_object.rect.y + invader.game_object.rect.height() as i32,
+                            3 * PIXEL_SIZE as u32,
+                            7 * PIXEL_SIZE as u32,
+                            String::from("invader_shot_texture"),
+                        ));
+                    }
+                }
+            }
+
+            self.loaded_shot.retain(|s| s.1 > *time);
         }
     }
 }
