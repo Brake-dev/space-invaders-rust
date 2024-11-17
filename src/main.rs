@@ -4,13 +4,14 @@ use sdl2::event::Event;
 use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::render::TextureCreator;
 
 mod barrier;
+mod collision;
 mod game;
 mod invader;
 mod player;
+mod renderer;
 mod texture_templates;
 mod textures;
 mod ufo;
@@ -21,7 +22,6 @@ use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, FPS, PIX
 use crate::player::Player;
 use crate::textures::textures;
 use crate::ui::{create_ui, UI};
-use crate::util::{draw_texture, draw_texture_nameless, overlaps};
 
 pub struct RetryEvent;
 pub struct ContinueEvent;
@@ -128,75 +128,12 @@ fn main() -> Result<(), String> {
             .filter_map(Keycode::from_scancode)
             .collect();
 
-        canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.clear();
-
         fps_manager.delay();
 
         if game.state == State::Playing {
-            for invader in &game.invaders {
-                draw_texture(
-                    &mut canvas,
-                    &textures,
-                    &missing_texture,
-                    &invader.game_object,
-                )?;
-            }
-
-            for shot in &game.invader_shots {
-                draw_texture(&mut canvas, &textures, &missing_texture, &shot)?;
-            }
-
-            for explosion in &game.explosions {
-                draw_texture(&mut canvas, &textures, &missing_texture, &explosion.0)?;
-            }
-
-            for barrier in &game.barrier_row {
-                draw_texture(
-                    &mut canvas,
-                    &textures,
-                    &missing_texture,
-                    &barrier.game_object,
-                )?;
-
-                for collider in &barrier.colliders {
-                    if collider.is_destroyed {
-                        draw_texture_nameless(
-                            &mut canvas,
-                            match textures.get("barrier_mask_texture") {
-                                Some(tex) => tex,
-                                None => &missing_texture,
-                            },
-                            &Rect::new(
-                                collider.rect.x,
-                                collider.rect.y,
-                                5 * PIXEL_SIZE as u32,
-                                5 * PIXEL_SIZE as u32,
-                            ),
-                        )?;
-                    }
-                }
-            }
-
-            if !player.game_object.is_destroyed {
-                draw_texture(
-                    &mut canvas,
-                    &textures,
-                    &missing_texture,
-                    &player.game_object,
-                )?;
-            } else {
+            if player.game_object.is_destroyed {
                 player_explosion_timer += 1;
                 game_over_timer += 1;
-            }
-
-            if player_explosion_timer > 0 && player_explosion_timer < 10 {
-                draw_texture(
-                    &mut canvas,
-                    &textures,
-                    &missing_texture,
-                    &explosion_game_object,
-                )?;
             }
 
             if ufo_timer == 0 {
@@ -206,79 +143,21 @@ fn main() -> Result<(), String> {
                 ufo_timer -= 1;
             }
 
-            if game.ufo_active {
-                draw_texture(
-                    &mut canvas,
-                    &textures,
-                    &missing_texture,
-                    &game.ufo.game_object,
-                )?;
-            }
-
             if game_over_timer > 1 {
                 game.set_game_over();
             }
 
-            for bullet in &player.bullets {
-                draw_texture(&mut canvas, &textures, &missing_texture, &bullet)?;
-            }
+            renderer::update(
+                &mut canvas,
+                &game,
+                &player,
+                &textures,
+                &missing_texture,
+                &player_explosion_timer,
+                &explosion_game_object,
+            );
 
-            canvas.present();
-
-            let mut next_bullets = player.bullets.clone();
-            let mut next_invaders = game.get_all_invader_objects();
-            let mut next_invader_shots = game.invader_shots.clone();
-            let mut next_colliders = game.get_all_barrier_colliders();
-
-            for bullet in &mut next_bullets {
-                for invader in &mut next_invaders {
-                    if overlaps(&invader.rect, &player.game_object.rect) {
-                        player.game_object.is_destroyed = true;
-                    }
-
-                    if overlaps(&invader.rect, &bullet.rect) {
-                        invader.is_destroyed = true;
-                        bullet.is_destroyed = true;
-                    }
-                }
-
-                for collider in &mut next_colliders {
-                    if !collider.is_destroyed && overlaps(&collider.rect, &bullet.rect) {
-                        collider.is_destroyed = true;
-                        bullet.is_destroyed = true;
-                    }
-                }
-
-                if overlaps(&game.ufo.game_object.rect, &bullet.rect) && game.ufo_active {
-                    game.ufo.game_object.is_destroyed = true;
-                    bullet.is_destroyed = true;
-                }
-            }
-
-            for invader_shot in &mut next_invader_shots {
-                if overlaps(&invader_shot.rect, &player.game_object.rect) {
-                    player.game_object.is_destroyed = true;
-                }
-
-                for bullet in &mut next_bullets {
-                    if overlaps(&invader_shot.rect, &bullet.rect) {
-                        invader_shot.is_destroyed = true;
-                        bullet.is_destroyed = true;
-                    }
-                }
-
-                for collider in &mut next_colliders {
-                    if !collider.is_destroyed && overlaps(&collider.rect, &invader_shot.rect) {
-                        collider.is_destroyed = true;
-                        invader_shot.is_destroyed = true;
-                    }
-                }
-            }
-
-            player.bullets = next_bullets;
-            game.set_all_invader_objects(next_invaders);
-            game.invader_shots = next_invader_shots;
-            game.set_all_barrier_colliders(next_colliders);
+            collision::update(&mut player, &mut game);
 
             game.update(&time);
             player.update(&keys);

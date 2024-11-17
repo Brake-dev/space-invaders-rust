@@ -11,23 +11,29 @@ pub fn draw_texture<'a>(
     textures: &HashMap<String, Texture<'a>>,
     missing_texture: &Texture<'a>,
     object: &GameObject,
-) -> Result<(), String> {
-    canvas.copy(
+) {
+    let result = canvas.copy(
         match textures.get(&object.texture_name) {
             Some(tex) => tex,
             None => &missing_texture,
         },
         None,
         object.rect,
-    )
+    );
+
+    match result {
+        Ok(_) => (),
+        Err(err) => println!("{}", err),
+    }
 }
 
-pub fn draw_texture_nameless<'a>(
-    canvas: &mut Canvas<Window>,
-    texture: &Texture<'a>,
-    rect: &Rect,
-) -> Result<(), String> {
-    canvas.copy(texture, None, *rect)
+pub fn draw_texture_nameless<'a>(canvas: &mut Canvas<Window>, texture: &Texture<'a>, rect: &Rect) {
+    let result = canvas.copy(texture, None, *rect);
+
+    match result {
+        Ok(_) => (),
+        Err(err) => println!("{}", err),
+    }
 }
 
 pub fn overlaps(a: &Rect, b: &Rect) -> bool {

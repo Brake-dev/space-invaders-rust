@@ -197,19 +197,6 @@ impl Game {
         }
     }
 
-    pub fn set_all_invader_objects(&mut self, next_objects: Vec<GameObject>) {
-        for (i, invader) in &mut self.invaders.iter_mut().enumerate() {
-            invader.game_object = next_objects[i].clone();
-        }
-    }
-
-    pub fn get_all_invader_objects(&self) -> Vec<GameObject> {
-        self.invaders
-            .iter()
-            .map(|i| i.game_object.clone())
-            .collect()
-    }
-
     fn get_last_invader_per_column(&self) -> Vec<i32> {
         let mut columns: Vec<i32> = vec![-1; ROW_SIZE as usize];
 
