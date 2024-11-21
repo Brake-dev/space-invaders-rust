@@ -14,6 +14,7 @@ mod player;
 mod renderer;
 mod texture_templates;
 mod textures;
+mod timer;
 mod ufo;
 mod ui;
 mod util;
@@ -21,6 +22,7 @@ mod util;
 use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, FPS, PIXEL_SIZE};
 use crate::player::Player;
 use crate::textures::textures;
+use crate::timer::Timer;
 use crate::ui::{create_ui, UI};
 
 pub struct RetryEvent;
@@ -52,6 +54,7 @@ fn main() -> Result<(), String> {
 
     let mut game = Game::new();
     let mut player = Player::new();
+    let mut timer = Timer::new(&game);
 
     let texture_creator: TextureCreator<_> = canvas.texture_creator();
     let (textures, missing_texture, empty_texture) = textures(&mut canvas, &texture_creator)?;
@@ -83,11 +86,6 @@ fn main() -> Result<(), String> {
     event.register_custom_event::<RetryEvent>()?;
     event.register_custom_event::<ContinueEvent>()?;
 
-    let mut time = 0;
-    let mut player_explosion_timer = 0;
-    let mut game_over_timer = 0;
-    let mut ufo_timer = game.get_next_ufo_time();
-
     'running: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -107,10 +105,7 @@ fn main() -> Result<(), String> {
                     Some(_) => {
                         game = Game::new();
                         player = Player::new();
-
-                        player_explosion_timer = 0;
-                        game_over_timer = 0;
-                        ufo_timer = game.get_next_ufo_time();
+                        timer = Timer::new(&game);
                     }
                     None => (),
                 }
@@ -131,65 +126,36 @@ fn main() -> Result<(), String> {
         fps_manager.delay();
 
         if game.state == State::Playing {
-            if player.game_object.is_destroyed {
-                player_explosion_timer += 1;
-                game_over_timer += 1;
-            }
-
-            if ufo_timer == 0 {
-                game.toggle_spawn_ufo();
-                ufo_timer = game.get_next_ufo_time();
-            } else {
-                ufo_timer -= 1;
-            }
-
-            if game_over_timer > 1 {
-                game.set_game_over();
-            }
-
             renderer::update(
                 &mut canvas,
                 &game,
                 &player,
                 &textures,
                 &missing_texture,
-                &player_explosion_timer,
+                &timer.player_explosion_timer,
                 &explosion_game_object,
             );
 
             collision::update(&mut player, &mut game);
 
-            game.update(&time);
+            game.update(&timer);
             player.update(&keys);
         } else {
-            canvas.set_draw_color(Color::RGB(0, 0, 0));
-            canvas.clear();
-
-            for ui_el in &modal_hash {
-                canvas.copy(ui_el.1, None, *ui_el.0)?;
-            }
-
-            canvas.copy(&arrow_texture, None, ui.get_cursor_target())?;
-
-            let ui_targets = ui.get_ui_targets_base_on_state(&ui_targets_hash, &game.state);
-
-            for ui_el in ui_targets {
-                canvas.copy(
-                    match ui_texture_hash.get(&ui_el.0) {
-                        Some(texture) => texture,
-                        None => &empty_texture,
-                    },
-                    None,
-                    ui_el.1,
-                )?;
-            }
-
-            canvas.present();
+            renderer::update_ui(
+                &mut canvas,
+                &modal_hash,
+                &arrow_texture,
+                &ui,
+                &game,
+                &ui_targets_hash,
+                &ui_texture_hash,
+                &empty_texture,
+            )
         }
 
         ui.update(&keys, &event, &game.state);
 
-        time += 1;
+        timer.update(&game, &player);
     }
 
     Ok(())

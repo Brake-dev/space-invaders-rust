@@ -8,6 +8,7 @@ use crate::barrier::{Barrier, Collider};
 use crate::invader::Invader;
 use crate::ufo::UFO;
 use crate::util::decrease_until_zero;
+use crate::Timer;
 
 pub const FPS: u32 = 60;
 
@@ -282,7 +283,15 @@ impl Game {
         self.spawn_ufo = !self.spawn_ufo;
     }
 
-    pub fn update(&mut self, time: &i32) {
+    pub fn update(&mut self, timer: &Timer) {
+        if timer.ufo_timer == 0 {
+            self.toggle_spawn_ufo();
+        }
+
+        if timer.game_over_timer > 1 {
+            self.set_game_over();
+        }
+
         for invader in &self.invaders {
             if invader.game_object.is_destroyed {
                 self.explosions.push((
@@ -293,7 +302,7 @@ impl Game {
                         10 * PIXEL_SIZE as u32,
                         String::from("explosion_texture"),
                     ),
-                    time + EXPLOSION_TIMER,
+                    timer.time + EXPLOSION_TIMER,
                 ));
             }
         }
@@ -334,7 +343,7 @@ impl Game {
                     10 * PIXEL_SIZE as u32,
                     String::from("explosion_texture"),
                 ),
-                time + EXPLOSION_TIMER,
+                timer.time + EXPLOSION_TIMER,
             ));
         }
 
@@ -348,12 +357,12 @@ impl Game {
                         10 * PIXEL_SIZE as u32,
                         String::from("explosion_texture"),
                     ),
-                    time + EXPLOSION_TIMER,
+                    timer.time + EXPLOSION_TIMER,
                 ));
             }
         }
 
-        self.explosions.retain(|e| e.1 > *time);
+        self.explosions.retain(|e| e.1 > timer.time);
 
         self.invader_shots
             .retain(|s| s.rect.y > 10 && !s.is_destroyed);
@@ -421,14 +430,14 @@ impl Game {
 
                 for (i, shot) in new_shots.iter().enumerate() {
                     self.loaded_shot
-                        .push((*shot, time + i as i32 * self.invader_tick));
+                        .push((*shot, timer.time + i as i32 * self.invader_tick));
                 }
 
                 self.invader_shot_timer = 0;
             }
 
             for shot in &self.loaded_shot {
-                if shot.1 <= *time {
+                if shot.1 <= timer.time {
                     if self.invaders.len() > shot.0 as usize {
                         let invader = &self.invaders[shot.0 as usize];
 
@@ -447,7 +456,7 @@ impl Game {
                 }
             }
 
-            self.loaded_shot.retain(|s| s.1 > *time);
+            self.loaded_shot.retain(|s| s.1 > timer.time);
         }
     }
 }

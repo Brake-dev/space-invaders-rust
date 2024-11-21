@@ -7,6 +7,7 @@ use sdl2::video::Window;
 
 use crate::game::{Game, GameObject, PIXEL_SIZE};
 use crate::player::Player;
+use crate::ui::UI;
 use crate::util::{draw_texture, draw_texture_nameless};
 
 pub fn update<'a>(
@@ -69,6 +70,41 @@ pub fn update<'a>(
 
     for bullet in &player.bullets {
         draw_texture(canvas, textures, missing_texture, &bullet);
+    }
+
+    canvas.present();
+}
+
+pub fn update_ui<'a>(
+    canvas: &mut Canvas<Window>,
+    modal_hash: &HashMap<Rect, Texture<'a>>,
+    arrow_texture: &Texture<'a>,
+    ui: &UI,
+    game: &Game,
+    ui_targets_hash: &HashMap<String, Rect>,
+    ui_texture_hash: &HashMap<String, Texture<'a>>,
+    empty_texture: &Texture<'a>,
+) {
+    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.clear();
+
+    for ui_el in modal_hash {
+        draw_texture_nameless(canvas, ui_el.1, ui_el.0);
+    }
+
+    draw_texture_nameless(canvas, arrow_texture, &ui.get_cursor_target());
+
+    let ui_targets = ui.get_ui_targets_base_on_state(ui_targets_hash, &game.state);
+
+    for ui_el in ui_targets {
+        draw_texture_nameless(
+            canvas,
+            match ui_texture_hash.get(&ui_el.0) {
+                Some(texture) => texture,
+                None => &empty_texture,
+            },
+            &ui_el.1,
+        );
     }
 
     canvas.present();
