@@ -61,7 +61,7 @@ pub struct Game {
     pub explosions: Vec<(GameObject, i32)>,
     invader_shot_timer: u32,
     pub state: State,
-    timer: i32,
+    invader_timer: i32,
     speed: i32,
     move_rows_down: VecDeque<u32>,
     pub ufo: UFO,
@@ -186,7 +186,7 @@ impl Game {
             explosions: vec![],
             invader_shot_timer: 0,
             state: State::Playing,
-            timer: 0,
+            invader_timer: 0,
             speed: 1,
             move_rows_down: VecDeque::new(),
             ufo: UFO::new(0),
@@ -371,10 +371,10 @@ impl Game {
             shot.rect.y += 10;
         }
 
-        self.timer += 1 * self.speed;
+        self.invader_timer += 1 * self.speed;
 
-        if self.timer >= self.invader_tick {
-            self.timer = 0;
+        if self.invader_timer >= self.invader_tick {
+            self.invader_timer = 0;
 
             let mut move_down = false;
             if self.move_rows_down.len() == 0 {

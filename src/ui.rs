@@ -9,9 +9,9 @@ use sdl2::video::{Window, WindowContext};
 use sdl2::EventSubsystem;
 
 use crate::game::{State, CANVAS_HEIGHT, CANVAS_WIDTH, PIXEL_SIZE};
+use crate::sdl_common::{ContinueEvent, RetryEvent};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
-use crate::{ContinueEvent, RetryEvent};
 
 #[derive(Clone)]
 pub struct UI {

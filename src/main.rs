@@ -12,6 +12,7 @@ mod game;
 mod invader;
 mod player;
 mod renderer;
+mod sdl_common;
 mod texture_templates;
 mod textures;
 mod timer;
@@ -19,34 +20,18 @@ mod ufo;
 mod ui;
 mod util;
 
-use crate::game::{Game, GameObject, State, CANVAS_HEIGHT, CANVAS_WIDTH, FPS, PIXEL_SIZE};
+use crate::game::{Game, GameObject, State, FPS, PIXEL_SIZE};
 use crate::player::Player;
+use crate::sdl_common::{ContinueEvent, RetryEvent};
 use crate::textures::textures;
 use crate::timer::Timer;
 use crate::ui::{create_ui, UI};
 
-pub struct RetryEvent;
-pub struct ContinueEvent;
-
 fn main() -> Result<(), String> {
-    let sdl_context = sdl2::init()?;
-    let video_subsystem = sdl_context.video()?;
-
-    let window = video_subsystem
-        .window(
-            "Space Invaders: Rust",
-            CANVAS_WIDTH as u32,
-            CANVAS_HEIGHT as u32,
-        )
-        .position_centered()
-        .opengl()
-        .build()
-        .map_err(|e| e.to_string())?;
+    let (mut canvas, event, mut event_pump) = sdl_common::init()?;
 
     let mut fps_manager = FPSManager::new();
     fps_manager.set_framerate(FPS)?;
-
-    let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -79,12 +64,6 @@ fn main() -> Result<(), String> {
             None => default_target,
         },
     );
-
-    let event = sdl_context.event()?;
-    let mut event_pump = sdl_context.event_pump()?;
-
-    event.register_custom_event::<RetryEvent>()?;
-    event.register_custom_event::<ContinueEvent>()?;
 
     'running: loop {
         for event in event_pump.poll_iter() {
