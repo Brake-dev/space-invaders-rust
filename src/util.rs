@@ -1,5 +1,5 @@
 use crate::game::GameObject;
-use sdl2::rect::Rect;
+use sdl2::rect::{FRect, Rect};
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 use std::collections::HashMap;
@@ -12,7 +12,7 @@ pub fn draw_texture<'a>(
     missing_texture: &Texture<'a>,
     object: &GameObject,
 ) {
-    let result = canvas.copy(
+    let result = canvas.copy_f(
         match textures.get(&object.texture_name) {
             Some(tex) => tex,
             None => &missing_texture,
@@ -27,7 +27,20 @@ pub fn draw_texture<'a>(
     }
 }
 
-pub fn draw_texture_nameless<'a>(canvas: &mut Canvas<Window>, texture: &Texture<'a>, rect: &Rect) {
+pub fn draw_texture_nameless<'a>(canvas: &mut Canvas<Window>, texture: &Texture<'a>, rect: &FRect) {
+    let result = canvas.copy_f(texture, None, *rect);
+
+    match result {
+        Ok(_) => (),
+        Err(err) => println!("{}", err),
+    }
+}
+
+pub fn draw_texture_nameless_rect<'a>(
+    canvas: &mut Canvas<Window>,
+    texture: &Texture<'a>,
+    rect: &Rect,
+) {
     let result = canvas.copy(texture, None, *rect);
 
     match result {
@@ -36,12 +49,12 @@ pub fn draw_texture_nameless<'a>(canvas: &mut Canvas<Window>, texture: &Texture<
     }
 }
 
-pub fn overlaps(a: &Rect, b: &Rect) -> bool {
-    let a_xmax = a.x + a.width() as i32;
-    let a_ymax = a.y + a.height() as i32;
+pub fn overlaps(a: &FRect, b: &FRect) -> bool {
+    let a_xmax = a.x + a.width();
+    let a_ymax = a.y + a.height();
 
-    let b_xmax = b.x + b.width() as i32;
-    let b_ymax = b.y + b.height() as i32;
+    let b_xmax = b.x + b.width();
+    let b_ymax = b.y + b.height();
 
     a_xmax > b.x && b_xmax > a.x && a_ymax > b.y && b_ymax > a.y
 }

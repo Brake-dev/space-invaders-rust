@@ -10,8 +10,8 @@ pub struct Invader {
 
 impl Invader {
     pub fn new(
-        x: i32,
-        y: i32,
+        x: f32,
+        y: f32,
         width: i32,
         height: i32,
         texture_name: String,
@@ -27,14 +27,14 @@ impl Invader {
     }
 
     pub fn move_x_right(&mut self) {
-        self.game_object.rect.x += 10;
+        self.game_object.rect.x += 10.0;
     }
 
     pub fn move_x_left(&mut self) {
-        self.game_object.rect.x -= 10;
+        self.game_object.rect.x -= 10.0;
     }
 
     pub fn move_down(&mut self) {
-        self.game_object.rect.y += 8 * PIXEL_SIZE;
+        self.game_object.rect.y += 8.0 * PIXEL_SIZE as f32;
     }
 }

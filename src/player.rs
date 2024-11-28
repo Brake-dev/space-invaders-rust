@@ -5,6 +5,7 @@ use sdl2::keyboard::Keycode;
 use crate::game::{
     GameObject, CANVAS_HEIGHT, CANVAS_LEFT_EDGE, CANVAS_RIGHT_EDGE, CANVAS_WIDTH, PIXEL_SIZE,
 };
+use crate::Timer;
 
 const HEIGHT_DIV_18: i32 = CANVAS_HEIGHT / 18;
 
@@ -21,8 +22,8 @@ impl Player {
     pub fn new() -> Self {
         Player {
             game_object: GameObject::new(
-                CANVAS_WIDTH / 2,
-                CANVAS_HEIGHT - HEIGHT_DIV_18,
+                CANVAS_WIDTH as f32 / 2.0,
+                (CANVAS_HEIGHT - HEIGHT_DIV_18) as f32,
                 15 * PIXEL_SIZE as u32,
                 8 * PIXEL_SIZE as u32,
                 String::from("player_texture"),
@@ -51,15 +52,15 @@ impl Player {
 
     pub fn shoot(&mut self) {
         self.bullets.push(GameObject::new(
-            self.game_object.rect.x + (self.game_object.rect.width() / 2) as i32 - 3,
-            self.game_object.rect.y - (self.game_object.rect.height() / 2) as i32,
+            self.game_object.rect.x + (self.game_object.rect.width() / 2.0) - 3.0,
+            self.game_object.rect.y - (self.game_object.rect.height() / 2.0),
             1 * PIXEL_SIZE as u32,
             4 * PIXEL_SIZE as u32,
             String::from("shot_texture"),
         ));
     }
 
-    pub fn update(&mut self, keys: &HashSet<Keycode>) {
+    pub fn update(&mut self, keys: &HashSet<Keycode>, timer: &Timer) {
         if self.game_object.is_destroyed {
             return;
         }
@@ -88,20 +89,20 @@ impl Player {
 
         self.prev_keys = keys.clone();
 
-        if self.moving_left && self.game_object.rect.x > CANVAS_LEFT_EDGE {
-            self.game_object.rect.x -= 10;
+        if self.moving_left && self.game_object.rect.x > CANVAS_LEFT_EDGE as f32 {
+            self.game_object.rect.x -= 0.6 * timer.delta_time as f32;
         }
 
-        if self.moving_right && self.game_object.rect.x < CANVAS_RIGHT_EDGE {
-            self.game_object.rect.x += 10;
+        if self.moving_right && self.game_object.rect.x < CANVAS_RIGHT_EDGE as f32 {
+            self.game_object.rect.x += 0.6 * timer.delta_time as f32;
         }
 
         if !self.bullets.is_empty() {
             self.bullets
-                .retain(|b| b.rect.y - 10 > 10 && !b.is_destroyed);
+                .retain(|b| b.rect.y - 10.0 > 10.0 && !b.is_destroyed);
 
             for bullet in &mut self.bullets {
-                bullet.rect.y -= 10;
+                bullet.rect.y -= 10.0;
             }
         }
 

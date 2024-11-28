@@ -1,7 +1,8 @@
 extern crate sdl2;
 
+use std::time::Duration;
+
 use sdl2::event::Event;
-use sdl2::gfx::framerate::FPSManager;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::render::TextureCreator;
@@ -29,9 +30,6 @@ use crate::ui::{create_ui, UI};
 
 fn main() -> Result<(), String> {
     let (mut canvas, event, mut event_pump) = sdl_common::init()?;
-
-    let mut fps_manager = FPSManager::new();
-    fps_manager.set_framerate(FPS)?;
 
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -102,8 +100,6 @@ fn main() -> Result<(), String> {
             .filter_map(Keycode::from_scancode)
             .collect();
 
-        fps_manager.delay();
-
         if game.state == State::Playing {
             renderer::update(
                 &mut canvas,
@@ -118,7 +114,7 @@ fn main() -> Result<(), String> {
             collision::update(&mut player, &mut game);
 
             game.update(&timer);
-            player.update(&keys);
+            player.update(&keys, &timer);
         } else {
             renderer::update_ui(
                 &mut canvas,
@@ -135,6 +131,8 @@ fn main() -> Result<(), String> {
         ui.update(&keys, &event, &game.state);
 
         timer.update(&game, &player);
+
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FPS));
     }
 
     Ok(())

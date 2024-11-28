@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use sdl2::rect::Rect;
+use sdl2::rect::FRect;
 
 use rand::{self, thread_rng, Rng};
 
@@ -38,15 +38,15 @@ const SPEED_INCREASE_LEN: i32 = 15;
 
 #[derive(Clone, Debug)]
 pub struct GameObject {
-    pub rect: Rect,
+    pub rect: FRect,
     pub texture_name: String,
     pub is_destroyed: bool,
 }
 
 impl GameObject {
-    pub fn new(x: i32, y: i32, width: u32, height: u32, texture_name: String) -> Self {
+    pub fn new(x: f32, y: f32, width: u32, height: u32, texture_name: String) -> Self {
         GameObject {
-            rect: Rect::new(x, y, width, height),
+            rect: FRect::new(x, y, width as f32, height as f32),
             texture_name,
             is_destroyed: false,
         }
@@ -91,8 +91,8 @@ impl Game {
 
         for i in 0..ROW_SIZE {
             invaders.push(Invader::new(
-                cur_x,
-                cur_y,
+                cur_x as f32,
+                cur_y as f32,
                 8 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture1"),
@@ -108,8 +108,8 @@ impl Game {
 
         for i in 0..ROW_SIZE {
             invaders.push(Invader::new(
-                cur_x,
-                cur_y,
+                cur_x as f32,
+                cur_y as f32,
                 11 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
@@ -125,8 +125,8 @@ impl Game {
 
         for i in 0..ROW_SIZE {
             invaders.push(Invader::new(
-                cur_x,
-                cur_y,
+                cur_x as f32,
+                cur_y as f32,
                 11 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture2"),
@@ -142,8 +142,8 @@ impl Game {
 
         for i in 0..ROW_SIZE {
             invaders.push(Invader::new(
-                cur_x,
-                cur_y,
+                cur_x as f32,
+                cur_y as f32,
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
@@ -159,8 +159,8 @@ impl Game {
 
         for i in 0..ROW_SIZE {
             invaders.push(Invader::new(
-                cur_x,
-                cur_y,
+                cur_x as f32,
+                cur_y as f32,
                 12 * PIXEL_SIZE,
                 8 * PIXEL_SIZE,
                 String::from("invader_texture3"),
@@ -171,11 +171,11 @@ impl Game {
             cur_x += (12 * PIXEL_SIZE) + WIDTH_DIV_80;
         }
 
-        let mut barrier_x = WIDTH_DIV_24 * 2;
+        let mut barrier_x = WIDTH_DIV_24 as f32 * 2.0;
 
         for _i in 0..4 {
             barrier_row.push(Barrier::new(barrier_x));
-            barrier_x += WIDTH_DIV_4;
+            barrier_x += WIDTH_DIV_4 as f32;
         }
 
         Game {
@@ -322,8 +322,8 @@ impl Game {
             self.ufo = UFO::new(self.ufo_spawn_times);
         }
 
-        if self.ufo.game_object.rect.x >= CANVAS_RIGHT_EDGE && self.ufo.dir == "right"
-            || self.ufo.game_object.rect.x <= CANVAS_LEFT_EDGE && self.ufo.dir == "left"
+        if self.ufo.game_object.rect.x >= CANVAS_RIGHT_EDGE as f32 && self.ufo.dir == "right"
+            || self.ufo.game_object.rect.x <= CANVAS_LEFT_EDGE as f32 && self.ufo.dir == "left"
         {
             self.ufo_active = false;
         }
@@ -365,10 +365,10 @@ impl Game {
         self.explosions.retain(|e| e.1 > timer.time);
 
         self.invader_shots
-            .retain(|s| s.rect.y > 10 && !s.is_destroyed);
+            .retain(|s| s.rect.y > 10.0 && !s.is_destroyed);
 
         for shot in &mut self.invader_shots {
-            shot.rect.y += 10;
+            shot.rect.y += 10.0;
         }
 
         self.invader_timer += 1 * self.speed;
@@ -379,10 +379,12 @@ impl Game {
             let mut move_down = false;
             if self.move_rows_down.len() == 0 {
                 for invader in &self.invaders {
-                    if invader.game_object.rect.x >= CANVAS_RIGHT_EDGE && invader.dir == "right" {
+                    if invader.game_object.rect.x >= CANVAS_RIGHT_EDGE as f32
+                        && invader.dir == "right"
+                    {
                         move_down = true;
                         break;
-                    } else if invader.game_object.rect.x <= CANVAS_LEFT_EDGE
+                    } else if invader.game_object.rect.x <= CANVAS_LEFT_EDGE as f32
                         && invader.dir == "left"
                     {
                         move_down = true;
@@ -444,9 +446,8 @@ impl Game {
                         if !invader.game_object.is_destroyed {
                             self.invader_shots.push(GameObject::new(
                                 invader.game_object.rect.x
-                                    + (invader.game_object.rect.width() / 2) as i32,
-                                invader.game_object.rect.y
-                                    + invader.game_object.rect.height() as i32,
+                                    + (invader.game_object.rect.width() / 2.0),
+                                invader.game_object.rect.y + invader.game_object.rect.height(),
                                 3 * PIXEL_SIZE as u32,
                                 7 * PIXEL_SIZE as u32,
                                 String::from("invader_shot_texture"),

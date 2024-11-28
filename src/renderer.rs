@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use sdl2::rect::{FRect, Rect};
 use sdl2::render::{Canvas, Texture};
 use sdl2::video::Window;
 
 use crate::game::{Game, GameObject, PIXEL_SIZE};
 use crate::player::Player;
 use crate::ui::UI;
-use crate::util::{draw_texture, draw_texture_nameless};
+use crate::util::{draw_texture, draw_texture_nameless, draw_texture_nameless_rect};
 
 pub fn update<'a>(
     canvas: &mut Canvas<Window>,
@@ -45,11 +45,11 @@ pub fn update<'a>(
                         Some(tex) => tex,
                         None => &missing_texture,
                     },
-                    &Rect::new(
+                    &FRect::new(
                         collider.rect.x,
                         collider.rect.y,
-                        5 * PIXEL_SIZE as u32,
-                        5 * PIXEL_SIZE as u32,
+                        5.0 * PIXEL_SIZE as f32,
+                        5.0 * PIXEL_SIZE as f32,
                     ),
                 );
             }
@@ -89,15 +89,15 @@ pub fn update_ui<'a>(
     canvas.clear();
 
     for ui_el in modal_hash {
-        draw_texture_nameless(canvas, ui_el.1, ui_el.0);
+        draw_texture_nameless_rect(canvas, ui_el.1, ui_el.0);
     }
 
-    draw_texture_nameless(canvas, arrow_texture, &ui.get_cursor_target());
+    draw_texture_nameless_rect(canvas, arrow_texture, &ui.get_cursor_target());
 
     let ui_targets = ui.get_ui_targets_base_on_state(ui_targets_hash, &game.state);
 
     for ui_el in ui_targets {
-        draw_texture_nameless(
+        draw_texture_nameless_rect(
             canvas,
             match ui_texture_hash.get(&ui_el.0) {
                 Some(texture) => texture,

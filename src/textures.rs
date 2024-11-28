@@ -410,7 +410,7 @@ pub fn get_collider_textures<'a>(
             texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
             texture_canvas.clear();
 
-            for item in 0..=collider.rect.y() {
+            for item in 0..=collider.rect.y() as i32 {
                 texture_canvas.set_draw_color(Color::RGB(255, 0, 0));
 
                 texture_canvas
