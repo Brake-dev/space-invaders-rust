@@ -4,7 +4,7 @@ use sdl2::rect::FRect;
 
 use rand::{self, thread_rng, Rng};
 
-use crate::barrier::{Barrier, Collider};
+use crate::barrier::Barrier;
 use crate::invader::Invader;
 use crate::ufo::UFO;
 use crate::util::decrease_until_zero;
@@ -235,24 +235,6 @@ impl Game {
         }
 
         vec![]
-    }
-
-    pub fn get_all_barrier_colliders(&self) -> Vec<Collider> {
-        self.barrier_row
-            .iter()
-            .flat_map(|c| c.colliders.clone())
-            .collect()
-    }
-
-    pub fn set_all_barrier_colliders(&mut self, next_objects: Vec<Collider>) {
-        let mut flat_index = 0 as usize;
-
-        for row in &mut self.barrier_row {
-            for collider in &mut row.colliders {
-                *collider = next_objects[flat_index].clone();
-                flat_index += 1;
-            }
-        }
     }
 
     pub fn set_playing(&mut self) {
