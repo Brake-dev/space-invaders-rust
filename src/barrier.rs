@@ -3,7 +3,7 @@ use sdl2::rect::FRect;
 use crate::game::{GameObject, CANVAS_HEIGHT, HEIGHT_DIV_4, PIXEL_SIZE};
 use crate::texture_templates::BARRIER;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Collider {
     pub rect: FRect,
     pub is_destroyed: bool,

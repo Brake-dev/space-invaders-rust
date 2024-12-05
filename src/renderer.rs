@@ -8,7 +8,9 @@ use sdl2::video::Window;
 use crate::game::{Game, GameObject, PIXEL_SIZE};
 use crate::player::Player;
 use crate::ui::UI;
-use crate::util::{draw_texture, draw_texture_nameless, draw_texture_nameless_rect};
+use crate::util::{
+    draw_anim_texture, draw_texture, draw_texture_nameless, draw_texture_nameless_rect,
+};
 
 pub fn update<'a>(
     canvas: &mut Canvas<Window>,
@@ -23,7 +25,13 @@ pub fn update<'a>(
     canvas.clear();
 
     for invader in &game.invaders {
-        draw_texture(canvas, textures, missing_texture, &invader.game_object);
+        draw_anim_texture(
+            canvas,
+            textures,
+            missing_texture,
+            &invader.game_object,
+            &invader.anim_step,
+        );
     }
 
     for shot in &game.invader_shots {

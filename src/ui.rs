@@ -13,7 +13,6 @@ use crate::sdl_common::{ContinueEvent, RetryEvent};
 use crate::texture_templates::ARROW;
 use crate::util::{center_x, center_y};
 
-#[derive(Clone)]
 pub struct UI {
     pub targets: [Rect; 2],
     pub cursor_pos: usize,

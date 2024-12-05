@@ -27,6 +27,38 @@ pub fn draw_texture<'a>(
     }
 }
 
+pub fn draw_anim_texture<'a>(
+    canvas: &mut Canvas<Window>,
+    textures: &HashMap<String, Texture<'a>>,
+    missing_texture: &Texture<'a>,
+    object: &GameObject,
+    anim_step: &i32,
+) {
+    let name_prefix = &object.texture_name;
+
+    let texture_name = if *anim_step == 1 {
+        let name_postfix = "_1";
+        format!("{name_prefix}{name_postfix}")
+    } else {
+        let name_postfix = "_2";
+        format!("{name_prefix}{name_postfix}")
+    };
+
+    let result = canvas.copy_f(
+        match textures.get(&texture_name) {
+            Some(tex) => tex,
+            None => &missing_texture,
+        },
+        None,
+        object.rect,
+    );
+
+    match result {
+        Ok(_) => (),
+        Err(err) => println!("{}", err),
+    }
+}
+
 pub fn draw_texture_nameless<'a>(canvas: &mut Canvas<Window>, texture: &Texture<'a>, rect: &FRect) {
     let result = canvas.copy_f(texture, None, *rect);
 

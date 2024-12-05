@@ -36,7 +36,7 @@ const DEFAULT_TICK: i32 = 50;
 const TICK_INCREASE: i32 = 12;
 const SPEED_INCREASE_LEN: i32 = 15;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct GameObject {
     pub rect: FRect,
     pub texture_name: String,
